@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Tech Lab Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <link rel="stylesheet" href="style_s.css" />
+</head>
+<body>
+<!-- TTL Navbar -->
+<div class="mt-navbar-top">
+  <div class="mt-navbar-left">
+    <div class="mt-logo">
+      <img src="assets/ttl logo.png" alt="The Tech Lab" />
+    </div>
+    <div class="mt-search">
+      <input type="text" placeholder="Search">
+      <span class="mt-search-icon">&#128269;</span>
+    </div>
+  </div>
+  <div class="mt-navbar-right">
+    <span class="mt-nav-link"><span class="mt-icon">&#10067;</span> Help</span>
+    <span class="mt-nav-link"><span class="mt-icon">&#128172;</span> Feedback</span>
+    <span class="mt-nav-link">
+      <span class="mt-icon"><img src="assets/student.png" style="height:22px;"></span>
+      <a href="/login" id="signin" class="btn">Sign Out</a>
+    </span>
+  </div>
+</div>
+
+<div class="dashboard">
+  <!-- Sidebar -->
+<aside class="sidebar">
+  <div class="profile-avatar">
+    <img src="assets/student.png" alt="Student" />
+  </div>
+  <nav>
+    <ul>
+      <li class="active"><i class="fa fa-th-large"></i> Dashboard</li>
+      <li><i class="fa fa-file-alt"></i> Projects</li>
+      <li><i class="fa fa-chalkboard-teacher"></i> Courses</li>
+      <!--<li><i class="fa fa-user-graduate"></i> Students</li>-->
+      <li><i class="fa fa-calendar-alt"></i> Calendar</li>
+      <li><i class="fa fa-chart-bar"></i> Reports</li>
+      <li><i class="fa fa-cog"></i> Settings</li>
+    </ul>
+  </nav>
+</aside>
+  <main>
+    <!-- Hero Banner -->
+    <div class="hero-card">
+      <div class="hero-msg">
+        <h2>Hi Robert Fox!</h2>
+        <p>Congratulations! You have successfully completed 4 lessons on our Learning Management System. Keep up the great work! Your progress is inspiring.</p>
+      </div>
+      <div class="hero-art">
+        <svg width="80" height="80">
+          <circle cx="40" cy="40" r="38" fill="#e0e7ff" />
+          <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="#6d4af6">👩‍💻</text>
+        </svg>
+      </div>
+    </div>
+    <div class="dashboard-content">
+      <div class="dashboard-main">
+        <!-- Analytics Row -->
+        <div class="row">
+          <div class="card analytics-card">
+            <div class="analytics-header">Learning Time</div>
+            <div class="analytics-body">
+              <svg width="70" height="70">
+                <circle cx="35" cy="35" r="30" stroke="#20c997" stroke-width="8" fill="none" stroke-dasharray="160" stroke-dashoffset="45"/>
+                <circle cx="35" cy="35" r="30" stroke="#eee" stroke-width="8" fill="none" stroke-dasharray="160" stroke-dashoffset="0"/>
+                <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-size="12" fill="#222">2hrs 15m</text>
+              </svg>
+              <div class="legend">
+                <span class="dot reading"></span> Reading
+                <span class="dot assignment"></span> Assignment
+              </div>
+            </div>
+          </div>
+          <!-- My Activity -->
+          <div class="card analytics-card">
+            <div class="analytics-header">My Activity</div>
+            <div class="analytics-body">
+              <svg height="70" width="140">
+                <polyline fill="none" stroke="#6d4af6" stroke-width="3"
+                  points="10,55 30,40 50,48 70,37 90,35 110,50 130,25" />
+                <line x1="10" y1="55" x2="130" y2="55" stroke="#eee" stroke-width="2"/>
+              </svg>
+              <div class="activity-labels">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Announcements -->
+        <div class="card announcement-card">
+          <div class="announcement-header">Announcement</div>
+          <div class="announcement-bodies">
+            <div class="announcement">
+              <div class="avatar" style="background: #FFE066;">DR</div>
+              <div>
+                <div class="announcement-name">Dianne Russell <span class="announcement-time">Tomorrow</span></div>
+                <div class="announcement-msg">
+                  Dear students, I hope you are prepared and feeling confident for tomorrow’s test. Please remember to arrive on time and bring all necessary materials. Best of luck to each of you. I believe in your abilities, and know you’ll do your best!
+                </div>
+              </div>
+            </div>
+            <div class="announcement">
+              <div class="avatar" style="background: #FFD6E0;">EH</div>
+              <div>
+                <div class="announcement-name">Esther Howard <span class="announcement-time">Monday</span></div>
+                <div class="announcement-msg">
+                  Monday test is a chance to showcase your knowledge and hard work. Come prepared, stay focused, and give it your best effort. You’ve got this!
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Courses Table -->
+        <div class="card courses-card">
+          <div class="courses-header">My Courses
+            <span class="tab active">All</span>
+            <span class="tab">Ongoing</span>
+            <span class="tab">Completed</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th></th>
+                <th></th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="course-dot" style="background: #6063f5"></span>
+                Advance level of Mobile Application Design Course</td>
+                <td></td>
+                <td>4.3 <i class="fa fa-star" style="color: #FFD700;"></i></td>
+                <td><span class="course-date">05/10/2023</span></td>
+                <td><a href="#" class="view-link">View Course</a></td>
+              </tr>
+              <tr>
+                <td><span class="course-dot" style="background: #32d296"></span>
+                Java Full Stack Course – 6 Month Online Bootcamp</td>
+                <td></td>
+                <td>4.0 <i class="fa fa-star" style="color: #FFD700;"></i></td>
+                <td><span class="course-date">10/12/2023</span></td>
+                <td><a href="#" class="view-link">View Course</a></td>
+              </tr>
+              <tr>
+                <td><span class="course-dot" style="background: #ff6961"></span>
+                Data Science Foundations Specialization</td>
+                <td></td>
+                <td>4.2 <i class="fa fa-star" style="color: #FFD700;"></i></td>
+                <td><span class="course-date">12/11/2023</span></td>
+                <td><a href="#" class="view-link">View Course</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Right Sidebar -->
+      <div class="dashboard-side">
+        <div class="card calendar-card">
+          <div class="calendar-header">Calendar</div>
+          <div class="calendar">
+            <div class="calendar-month">
+              <span><i class="fa fa-angle-left"></i></span>
+              <span>September 2023</span>
+              <span><i class="fa fa-angle-right"></i></span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>27</td><td>28</td><td>29</td><td>30</td><td>31</td><td>1</td><td>2</td></tr>
+                <tr><td>3</td><td>4</td><td>5</td><td>6</td><td class="active">7</td><td>8</td><td>9</td></tr>
+                <tr><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr>
+                <tr><td>17</td><td>18</td><td class="today">19</td><td>20</td><td>21</td><td>22</td><td>23</td></tr>
+                <tr><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card upcoming-card">
+          <div class="upcoming-header">Upcoming Task</div>
+          <div class="upcoming-task">
+            <div class="task-tag" style="background:#e4e7fd;color:#6063f5;">Assignment 103</div>
+            <span class="task-date">10/10/2023</span>
+          </div>
+          <div class="upcoming-task">
+            <div class="task-tag" style="background:#fff3cd;color:#856404;">Homepage design</div>
+            <span class="task-date">10/10/2023</span>
+          </div>
+          <div class="upcoming-task">
+            <div class="task-tag" style="background:#e6ffed;color:#155724;">Project Presentation</div>
+            <span class="task-date">10/10/2023</span>
+          </div>
+          <div class="upcoming-task">
+            <div class="task-tag" style="background:#e2e3e5;color:#383d41;">Homework</div>
+            <span class="task-date">10/10/2023</span>
+          </div>
+          <div class="upcoming-task">
+            <div class="task-tag" style="background:#f8d7da;color:#721c24;">Java Presentation</div>
+            <span class="task-date">10/10/2023</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Tech Lab</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="style_h.css" />
+</head>
+<body>
+<!-- Navbar -->
+<div class="mt-navbar-top">
+  <div class="mt-navbar-left">
+    <div class="mt-logo">
+      <img src="assets/ttl logo.png" alt="The Tech Lab" />
+    </div>
+    <div class="mt-search">
+      <input type="text" placeholder="Search">
+      <span class="mt-search-icon">&#128269;</span>
+    </div>
+  </div>
+
+  <!-- Hamburger for mobile -->
+  <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+  <label for="nav-toggle" class="nav-toggle-label" aria-label="Menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </label>
+
+  <div class="mt-navbar-right">
+    <span class="mt-nav-link"><span class="mt-icon">&#10067;</span> Help</span>
+    <span class="mt-nav-link"><span class="mt-icon">&#128172;</span> Feedback</span>
+    <span class="mt-nav-link">
+      <span class="mt-icon"><img src="assets/student.png"></span>
+      <a href="/login" id="signin" class="btn btn-dark">Sign In</a>
+    </span>
+  </div>
+</div>
+<nav class="mt-menu-bar">
+  <ul>
+    <li><span class="mt-icon">&#8962;</span></li>
+    <li><a href="#courses">Courses</a></li>
+    <li><a href="#">Mentors</a></li>
+    <li><a href="#blogs">Blogs</a></li>
+    <li><a href="#aboutUs">About Us</a></li>
+  </ul>
+</nav>
+<br>
+<br>
+  <main>
+    <!-- Hero Section -->
+  <div class="video-background">
+  <video autoplay muted loop playsinline>
+    <source src="assets/TTLvid.mp4" type="video/mp4">
+  </video>
+    <div class="content">
+      <!-- on top of video -->
+    </div>
+  </div>
+  <!-- Blog Section -->
+   <section class ="blog-intro">
+    <h2><strong>Tech Insights & Innovations</strong></h2>
+    <p>Stay updated with the latest trends and insights in technology, data science, and career development through our expert articles and resources.</p>
+  <section class="blog" id ="blogs">
+    <div class="blog-left">
+      <a href="#" class="blog-link">
+        <h2 class="blog-title">Empowering Future Tech Leaders</h2>
+      </a>
+      <p class="blog-desc">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      </p>
+      <button class="blog-btn">Read More</button>
+    </div>
+    <div class="blog-right">
+      <div class="blog-image"><img src = "assets/hero.png"></div>
+    </div>
+  </section>
+    <section class="blog" id ="blogs">
+    <div class="blog-left">
+      <a href="#" class="blog-link">
+        <h2 class="blog-title">Breakthrough in Artificial Intelligence: New Model Achieves Human-Level Language Understanding</h2>
+      </a>
+      <p class="blog-desc">
+          In a significant milestone for artificial intelligence, researchers have developed a new AI model that demonstrates human-level understanding of complex language tasks. This model, named AlphaLingo, utilizes advanced neural network architecture and extensive training data to interpret and generate human-like text with remarkable accuracy. 
+          The breakthrough promises to revolutionize industries such as customer service, content creation, and data analysis by enabling more natural and efficient interactions between humans and machines. Experts believe this development marks a step closer to truly intelligent systems capable of understanding context, nuance, and subtleties in language.
+          Leading AI companies are already exploring integration of AlphaLingo into their platforms, aiming to enhance automation and user experience. While ethical considerations remain, this advancement underscores the rapid progress in AI technology and its potential to reshape the digital landscape.
+      </p>
+      <button class="blog-btn">Read More</button>
+    </div>
+    <div class="blog-right">
+      <div class="blog-image"><img src = "assets/aiart.png"></div>
+    </div>
+  </section>
+  </section>
+<br>
+  <!-- Courses Carousel -->
+<section class="carousel-section" id="courses">
+  <h2><strong>Programs and Trainings</strong></h2>
+  <div class="carousel">
+    <div class="carousel-card active"></div>
+    <div class="carousel-card"></div>
+    <div class="carousel-card"></div>
+    <div class="carousel-card"></div>
+    <div class="carousel-card"></div>
+    <div class="carousel-card"></div>
+    <div class="carousel-card"></div>
+    <div class="carousel-card"></div>
+  </div>
+</section>
+<br><br>
+  <!-- Stats Section -->
+  <section class="stats-section"" id ="aboutUs">
+   <div><h2><strong>Our Community</strong></h2></div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-circle"><img src = "assets/s1.png"></div>
+      <div><strong>1000+</strong><br><span>Students</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-circle"><img src = "assets/s2.png"></div>
+      <div><strong>30+</strong><br><span>Mentors</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-circle"><img src = "assets/s3.png"></div>
+      <div><strong>10+</strong><br><span>Programs</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-circle"><img src = "assets/s4.png"></div>
+      <div><strong>100+</strong><br><span>Resources</span></div>
+    </div>
+  </div>
+  </section>
+  <div class="container">
+    <!-- Left Section -->
+    <section class="left-section">
+      <div class="title">
+        <span class="highlight">Connect</span> with Our Team of Experts
+      </div>
+      <p class="subtitle">
+        Contact our team of excellence-driven experts today to bring your career goal to life.
+      </p>
+      <div class="contact-icons">
+        <span>📞 713.123.4567</span>
+        <span>📧 <a href="mailto:support@thetechlab.com">support@thetechlab.com</a></span>
+        <span>📍 <a href="#">HQ</a></span>
+      </div>
+      <div class="ratio ratio-4x3 mt-4" align="center">
+          <iframe 
+            src="https://www.google.com/maps?q=1428+Willow+Lane,+Denver,+CO+80205&output=embed" 
+            allowfullscreen 
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+      </div><br>
+      <div class="talent-box">
+        <div>
+          <strong>Want to Join Our Talented Team?</strong> <br>
+          <a href="#" class="job-link">VISIT OUR JOB BOARD <span>&rarr;</span></a>
+        </div>
+        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Smiling professional" class="talent-image">
+      </div>
+    </section>
+    
+    <!-- Right Section (Form)-->
+    <section class="right-section">
+      <form class="contact-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fname">Full Name</label>
+            <input type="text" id="fname" placeholder="Full Name">
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="Email Address">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="text" id="phone" placeholder="Phone Number">
+          </div>
+          <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" placeholder="Location">
+          </div>
+        </div>
+        <div class="form-group full-width">
+          <label for="expertise">What Expertise You're Interested In</label>
+          <select id="expertise">
+            <option value="">Select</option>
+            <option>Analytics</option>
+            <option>Automations</option>
+            <option>CyberSecurity</option>
+            <option>Software Development</option>
+            <option>Mobile Development</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label for="project">Tell Us About Your Story</label>
+          <textarea id="project" rows="4" placeholder="Leave your message here"></textarea>
+        </div>
+        <button type="submit" class="submit-btn">Send <span>&rarr;</span></button>
+      </form>
+    </section>
+  </div>
+
+  <!-- Bubble -->
+<div class="bubble-container">
+  <div class="soap-bubble" id="bubble">
+    <span class="bubble-text">Hi!</span>
+  </div>
+</div>
+
+<!-- Chatbot Panel (hidden by default) -->
+<div class="chatbot-panel" id="chatbotPanel">
+  <div class="chatbot-header">
+    <span>ChatBot</span>
+    <span class="chatbot-close" id="closeChatbot">&times;</span>
+  </div>
+  <div class="chatbot-body">
+    <p>Hello! How can I help you?</p>
+    <!-- Place your actual chatbot component or embed here -->
+  </div>
+</div>
+ </main>
+  <!-- Footer -->
+<footer class="footer">
+  &copy; <span id="year"></span> The Tech Lab &nbsp; | &nbsp; Site Map &nbsp; | &nbsp; Terms of Use & Policy
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script src="script.js"></script>
+</body>
+</html>

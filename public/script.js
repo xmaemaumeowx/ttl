@@ -1,123 +1,133 @@
-// TOAST FUNCTION
+// ===== TOAST FUNCTION =====
 function showToast(message, type = "success") {
-  const toast = document.getElementById('toast');
+  const toast = document.getElementById("toast");
+  if (!toast) return;
   toast.textContent = message;
-  // Remove any previous type classes & 'show'
-  toast.className = 'toast';
-  // Add the new type class & 'show'
-  toast.classList.add(`toast-${type}`, 'show');
-  setTimeout(() => {
-    toast.className = 'toast';
-  }, 3000);
+  toast.className = "toast";
+  toast.classList.add(`toast-${type}`, "show");
+  setTimeout(() => (toast.className = "toast"), 3000);
 }
 
-// SIGNUP VALIDATION
-function validateSignUpForm(email, password) {
-  if (!email || !password) {
-    showToast("Please enter your email and password!", "error");
-    return false;
-  }
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(email)) {
-    showToast("Invalid email format!", "error");
-    return false;
-  }
-  const strongPasswordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\{}\[\]|\\:;"'<>,.?/]).{8,}$/;
-  if (!strongPasswordPattern.test(password)) {
-    showToast(
-      "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character!",
-      "error"
-    );
-    return false;
-  }
-  return true;
-}
+// ===== DOM READY =====
+document.addEventListener("DOMContentLoaded", () => {
+  const showSignup = document.getElementById("show-signup");
+  const signupModal = document.getElementById("signup-modal");
+  const closeSignup = document.getElementById("close-signup");
 
-// LOGIN VALIDATION
-function validateLoginForm(email, password) {
-  if (!email || !password) {
-    showToast("Please enter your email and password!", "error");
-    return false;
-  }
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(email)) {
-    showToast("Invalid email format!", "error");
-    return false;
-  }
-  return true;
-}
-
-// LOGIN FORM HANDLER
-const loginForm = document.getElementById('loginForm');
-if (loginForm) {
-  loginForm.addEventListener('submit', async function(e) {
+  // Open modal
+  showSignup?.addEventListener("click", (e) => {
     e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if (!validateLoginForm(email, password)) return;
-    try {
-      const res = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      showToast(data.message, data.type || (res.ok ? 'success' : 'error'));
-      if (res.ok && data.message === 'Login successful!') {
-        setTimeout(() => window.location.href = "/home", 2000);
-      }
-    } catch (err) {
-      showToast('An error occurred. Please try again.', 'error');
-      console.error('Login Error:', err);
+    signupModal.style.display = "flex";
+  });
+
+  // Close modal
+  closeSignup?.addEventListener("click", () => {
+    signupModal.style.display = "none";
+  });
+
+  // Close when clicking outside
+  window.addEventListener("click", (e) => {
+    if (e.target === signupModal) {
+      signupModal.style.display = "none";
     }
   });
-}
 
-// SIGNUP FORM HANDLER
-const signupForm = document.getElementById('signupForm');
-if (signupForm) {
-  signupForm.addEventListener('submit', async function(e) {
+  // ===== Signup Form =====
+  const signupForm = document.getElementById("signupForm");
+  signupForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if (!validateSignUpForm(email, password)) return;
+    const full_name = document.getElementById("signup-name").value.trim();
+    const email = document.getElementById("signup-email").value.trim();
+    const password = document.getElementById("signup-password").value.trim();
+
+    if (!full_name || !email || !password) {
+      showToast("All fields are required", "error");
+      return;
+    }
+
     try {
-      const res = await fetch('/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      const res = await fetch("/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ full_name, email, password }),
       });
       const data = await res.json();
-      showToast(data.message, data.type || (res.ok ? 'success' : 'error'));
-      if (res.ok && data.message === 'User successfully added. Please log in.') {
-        setTimeout(() => {
-          window.location.href = `/?message=${encodeURIComponent(data.message)}`;
-        }, 2000);
+      showToast(data.message, data.success ? "success" : "error");
+
+      if (data.success) {
+        signupModal.style.display = "none";
+        signupForm.reset();
+        setTimeout(() => window.location.href = "/login", 1500);
       }
     } catch (err) {
-      showToast('An error occurred. Please try again.', 'error');
-      console.error('Signup Error:', err);
+      console.error(err);
+      showToast("Signup failed", "error");
     }
   });
-}
 
-// GOOGLE ONE TAP CALLBACK (no validation)
+  // ===== Login Form =====
+  const loginForm = document.getElementById("loginForm");
+  loginForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) {
+      showToast("All fields are required", "error");
+      return;
+    }
+
+    try {
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      showToast(data.message, res.ok ? "success" : "error");
+      if (res.ok && data.success) setTimeout(() => window.location.href = "/dashboard", 1500);
+    } catch (err) {
+      console.error(err);
+      showToast("Login failed", "error");
+    }
+  });
+});
+
+// ===== Google One Tap =====
 function handleCredentialResponse(response) {
-  fetch('/api/auth/google', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id_token: response.credential })
+  fetch("/api/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_token: response.credential }),
   })
-  .then(async res => {
-    const data = await res.json();
-    showToast(data.message, data.type || (res.ok ? 'success' : 'error'));
-    if (res.ok && data.message === 'Login successful!') {
-      setTimeout(() => window.location.href = "/home", 2000);
-    }
-  })
-  .catch(error => {
-    showToast(error.message || 'Google sign-in failed.', 'error');
-    console.error('Login failed:', error);
-  });
+    .then(async res => {
+      const data = await res.json();
+      showToast(data.message, res.ok ? "success" : "error");
+      if (res.ok) setTimeout(() => window.location.href = "/dashboard", 1500);
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("Google login failed", "error");
+    });
 }
+
+// --- CAROUSEL (optional) ---
+document.addEventListener("DOMContentLoaded", () => {
+  // ...all your previous DOMContentLoaded code...
+  // AND place the carousel code inside DOMContentLoaded
+  const cards = document.querySelectorAll(".carousel-card");
+  if (cards.length > 0) {
+    let activeIndex = 0;
+    const totalCards = cards.length;
+    const INTERVAL = 3000;
+    function setActiveCard(index) {
+      cards.forEach((card, i) => card.classList.toggle("active", i === index));
+    }
+    function nextCard() {
+      activeIndex = (activeIndex + 1) % totalCards;
+      setActiveCard(activeIndex);
+    }
+    setActiveCard(activeIndex);
+    setInterval(nextCard, INTERVAL);
+  }
+});

@@ -1,154 +1,117 @@
-// Load environment variables
-require('dotenv').config();
-const express = require('express');
-const path = require('path');
-const bcrypt = require('bcryptjs');
-const mongoose = require('mongoose');
-const session = require('express-session');
-
-// Import User model (adjust path if needed)
-const User = require('./models/user');
+// src/index.js
+require("dotenv").config();
+const express = require("express");
+const path = require("path");
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const oracledb = require("oracledb");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Google OAuth client
-const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '/views'));
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'supersecretkey',
-  resave: false,
-  saveUninitialized: false
-}));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => {
-  console.log('MongoDB connected');
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-})
-.catch(err => {
-  console.error('MongoDB connection error:', err);
-  process.exit(1);
-});
+// Static & Views
+app.use(express.static(path.join(__dirname, "../public")));
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-// Page routes
-app.get('/', (req, res) => res.render('login'));
-app.get('/login', (req, res) => res.render('login'));
-app.get('/signup', (req, res) => res.render('signup'));
-app.get('/home', (req, res) => {
-  const user = req.session.user || null; // not rendered but available if needed
-  res.render('home');
-});
-
-// Signup handler
-app.post('/signup', async (req, res) => {
-  const { email, password } = req.body;
-
-  // Validate required fields
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required', type: 'error' });
-  }
-  // Validate format and strength
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\{}\[\]|\\:;"'<>,.?/]).{8,}$/;
-  if (!emailPattern.test(email)) {
-    return res.status(400).json({ message: 'Invalid email format!', type: 'error' });
-  }
-  if (!strongPasswordPattern.test(password)) {
-    return res.status(400).json({
-      message: 'Password must be at least 8 characters long, include uppercase, lowercase, number, and special character!',
-      type: 'error'
-    });
-  }
+// Oracle DB
+let connection;
+async function initDB() {
   try {
-    const existingUser = await User.findOne({ username: email, provider: 'local' });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already in use', type: 'error' });
-    }
+    connection = await oracledb.getConnection({
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      connectString: process.env.DB_CONNECT_STRING,
+    });
+    console.log("✅ Connected to Oracle DB");
+  } catch (err) {
+    console.error("Oracle DB connection error:", err);
+  }
+}
+initDB();
+
+// Routes
+app.get("/", (req, res) => res.render("index"));
+app.get("/login", (req, res) => res.render("login"));
+
+// ---------------- Signup ----------------
+app.post("/signup", async (req, res) => {
+  const { full_name, email, password } = req.body;
+  if (!full_name || !email || !password)
+    return res.status(400).json({ success: false, message: "All fields are required!" });
+
+  try {
+    const result = await connection.execute(`SELECT * FROM users WHERE email = :email`, [email]);
+    if (result.rows.length > 0)
+      return res.status(400).json({ success: false, message: "Email already exists!" });
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username: email, password: hashedPassword, provider: 'local' });
-    await newUser.save();
-    res.json({ message: 'User successfully added. Please log in.', type: 'success' });
+    await connection.execute(
+      `INSERT INTO users (full_name, email, password_hash) VALUES (:name, :email, :password)`,
+      { name: full_name, email, password: hashedPassword },
+      { autoCommit: true }
+    );
+
+    const token = jwt.sign({ email, full_name }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.cookie("token", token, { httpOnly: true });
+
+    return res.json({ success: true, message: "Signup successful!" });
   } catch (err) {
-    console.error('Signup error:', err);
-    res.status(500).json({ message: 'Server error', type: 'error' });
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// Login handler
-app.post('/login', async (req, res) => {
+// ---------------- Login ----------------
+app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required', type: 'error' });
-  }
+  if (!email || !password)
+    return res.status(400).json({ success: false, message: "Email and password required!" });
+
   try {
-    const user = await User.findOne({ username: email, provider: 'local' });
-    if (!user) {
-      return res.status(400).json({ message: 'User not found', type: 'error' });
-    }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials', type: 'error' });
-    }
-    req.session.user = { email };
-    return res.json({ message: 'Login successful!', type: 'success' });
+    const result = await connection.execute(`SELECT * FROM users WHERE email = :email`, [email]);
+    if (result.rows.length === 0)
+      return res.status(400).json({ success: false, message: "User not found!" });
+
+    const user = result.rows[0];
+    const match = await bcrypt.compare(password, user.PASSWORD_HASH);
+    if (!match) return res.status(400).json({ success: false, message: "Incorrect password!" });
+
+    const token = jwt.sign({ email, full_name: user.FULL_NAME }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.cookie("token", token, { httpOnly: true });
+
+    return res.json({ success: true, message: "Login successful!" });
   } catch (err) {
-    console.error('Login error:', err);
-    return res.status(500).json({ message: 'Server error', type: 'error' });
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// Get current user
-app.get('/current-user', (req, res) => {
-  res.json({ user: req.session.user || null });
-});
+// Dashboard (JWT protected)
+app.get("/dashboard", (req, res) => {
+  const token = req.cookies?.token;
+  if (!token) return res.redirect("/login");
 
-// Logout handler
-app.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      console.error('Logout error:', err);
-    }
-    res.redirect('/');
-  });
-});
-
-// Google OAuth handler
-app.post('/api/auth/google', async (req, res) => {
-  const { id_token } = req.body;
-  if (!id_token) {
-    return res.status(400).json({ message: 'No ID token provided.', type: 'error' });
-  }
   try {
-    const ticket = await client.verifyIdToken({
-      idToken: id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    const email = payload.email;
-
-    let user = await User.findOne({ username: email, provider: 'google' });
-    if (!user) {
-      user = new User({ username: email, provider: 'google' });
-      await user.save();
-    }
-    req.session.user = { email };
-    res.json({ message: 'Login successful!', type: 'success' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.send(`<h2>Welcome ${decoded.full_name}!</h2><a href="/logout">Logout</a>`);
   } catch (err) {
-    console.error('Google Auth error:', err);
-    res.status(401).json({ message: 'Google authentication failed.', type: 'error' });
+    return res.redirect("/login");
   }
 });
+
+// Logout
+app.get("/logout", (req, res) => {
+  res.clearCookie("token");
+  res.redirect("/login");
+});
+
+// Start server
+app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

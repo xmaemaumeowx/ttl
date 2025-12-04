@@ -17,7 +17,7 @@ _The Tech Lab_ is a modern, role-based Learning Management System built with Nod
   - Edit personal info (name, email) and password (secure, with bcrypt)
 - **Courses, Modules, Lessons Hierarchy**
   - Courses grouped by tracks; modules and lessons display status and update dates
-- **Dashboard, Calendar, and Reports**
+- **Dashboard, Calendar, and Reports** -- for phase 2
 - **Accessible, responsive TTL-themed UI**
 
 ---
@@ -67,9 +67,39 @@ _The Tech Lab_ is a modern, role-based Learning Management System built with Nod
    cd the-tech-lab
 
 2. **Install dependencies**
+    ```bash
+        npm install
+        ```
+3. ***Setup Oracle Database***
+Configure your user/table schema (see /db/schema.sql)
+Add .env file (see .env.example):
+
+4. ***Run the server**
+    ```bash
+        node src/index.js
+        ```
+5. ***Launch Localhost***
+
+6. ***Folder Structure***
+```bash
+/src — Express app, routes, controllers
+/public — Public assets (avatars, CSS, client JS, images)
+/src/views — EJS templates (pages, partials)
+/db — Schema, possible SQL scripts
+```
+7. ***Customization***
+Theme Colors: See public/css/*.css and change TTL branding in :root
+Roles Logic: See middleware in src/index.js
+Sidebar Navigation: See src/views/partials/sidebar.ejs for role-based rendering
+
+8. ***Contributing***
+Pull requests are welcome! Please open an issue first to discuss a major change or feature.
+
+***License***
+MIT
 
 
-Colors used for The Tech Lab 
+###Colors used for The Tech Lab 
 Primary Colors
 Azure (Primary): #2198b4
 

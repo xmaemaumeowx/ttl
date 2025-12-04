@@ -1,0 +1,66 @@
+<%- include('partials/header', { pageTitle: 'Reports' }) %>
+<link rel="stylesheet" href="/reports.css">
+<%- include('partials/navbar') %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'reports' }) %>
+  <main class="reports-main">
+    <h1 class="page-title">My Learning Reports</h1>
+    <% if (!courses || courses.length === 0) { %>
+      <p>No courses found.</p>
+    <% } else { %>
+      <div class="course-report-list">
+        <% courses.forEach(course => { %>
+          <section class="course-report-card">
+            <div class="course-report-header">
+              <h2><%= course.course_name %></h2>
+              <span class="status-badge <%= course.status.replace(/\s+/g, '-').toLowerCase() %>">
+                <%= course.status %>
+              </span>
+              <span class="last-updated">Last Updated: <%= course.last_updated %></span>
+            </div>
+            <% if (course.modules && course.modules.length > 0) { %>
+              <div class="module-list">
+                <% course.modules.forEach(module => { %>
+                  <div class="module-report-card">
+                    <div class="module-header">
+                      <h3><%= module.module_name %></h3>
+                      <span class="status-badge <%= module.status.replace(/\s+/g, '-').toLowerCase() %>">
+                        <%= module.status %>
+                      </span>
+                      <span class="last-updated">Last Updated: <%= module.last_updated %></span>
+                    </div>
+                    <% if (module.lessons && module.lessons.length > 0) { %>
+                      <table class="lesson-table">
+                        <thead>
+                          <tr>
+                            <th>Lesson</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% module.lessons.forEach(lesson => { %>
+                            <tr>
+                              <td><%= lesson.lesson_name %></td>
+                              <td>
+                                <span class="status-badge <%= lesson.status.replace(/\s+/g, '-').toLowerCase() %>">
+                                  <%= lesson.status %>
+                                </span>
+                              </td>
+                              <td><%= lesson.last_updated %></td>
+                            </tr>
+                          <% }) %>
+                        </tbody>
+                      </table>
+                    <% } %>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </section>
+        <% }); %>
+      </div>
+    <% } %>
+  </main>
+</div>
+<%- include('partials/footer') %>

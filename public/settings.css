@@ -1,0 +1,124 @@
+:root {
+  --primary-color: #2198b4;
+  --primary-dark: #171d22;
+  --accent-color: #d3428e;
+  --highlight-color: #fecd2a;
+  --text-dark: #171d22;
+  --text-light: #fff;
+  --bg-light: #f6f8fd;
+  --bg-card: #fff;
+}
+
+.settings-main {
+  max-width: 510px;
+  margin: 2em auto 3em auto;
+  padding: 2em;
+  background: var(--bg-card);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(33,152,180,0.07);
+}
+.page-title {
+  color: var(--primary-color);
+  margin-bottom: 1.6em;
+  text-align: center;
+}
+.settings-avatar-block {
+  display: flex;
+  align-items: center;
+  gap: 1.6em;
+  margin-bottom: 2em;
+  background: var(--bg-light);
+  padding: 1.2em 1.6em;
+  border-radius: 12px;
+}
+.profile-avatar-img {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-color);
+  box-shadow: 0 2px 10px rgba(211,66,142,0.09);
+  background: #fff;
+}
+.settings-avatar-block form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.settings-avatar-block label {
+  color: var(--primary-dark);
+  font-size: 1em;
+  margin-bottom: .2em;
+}
+.settings-avatar-block button {
+  background: var(--primary-color);
+  color: var(--text-light);
+  font-weight: 700;
+  border: none;
+  border-radius: 7px;
+  padding: .45em 1.4em;
+  margin-top: .3em;
+  cursor: pointer;
+  transition: background .16s;
+}
+.settings-avatar-block button:hover {
+  background: var(--accent-color);
+}
+.settings-form-section {
+  background: var(--bg-light);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(33,152,180,0.06);
+  padding: 2em 2em 1.5em 2em;
+  margin-bottom: 2em;
+}
+.settings-form-section label {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 0.38em;
+  display: block;
+  font-size: 1.02em;
+}
+.settings-form-section input[type="text"],
+.settings-form-section input[type="email"],
+.settings-form-section input[type="password"],
+.settings-form-section input[type="file"] {
+  width: 100%;
+  margin-bottom: 1.2em;
+  border-radius: 7px;
+  border: 1.5px solid #e1e7ec;
+  padding: 0.66em 1em;
+  font-size: 1em;
+  background: var(--bg-card);
+  color: var(--primary-dark);
+  box-sizing: border-box;
+}
+.settings-form-section button {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 0.58em 1.7em;
+  font-weight: 600;
+  font-size: 1.08em;
+  cursor: pointer;
+  margin-top: 0.4em;
+  transition: background 0.16s;
+}
+.settings-form-section button:hover {
+  background: var(--accent-color);
+}
+
+@media (max-width: 650px) {
+  .settings-main {
+    padding: 1.1em;
+    max-width: 98vw;
+  }
+  .settings-form-section {
+    padding: 1.1em 1em 1em 1em;
+  }
+  .settings-avatar-block {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.7em 1em;
+  }
+}

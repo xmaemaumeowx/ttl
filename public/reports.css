@@ -1,0 +1,139 @@
+:root {
+  --primary-color: #2198b4;
+  --accent-color: #d3428e;
+  --highlight-color: #fecd2a;
+  --bg-card: #fff;
+  --bg-light: #f6f8fd;
+  --text-dark: #171d22;
+  --text-light: #fff;
+  --complete-color: #0ab8a8;
+  --in-progress-color: #fecd2a;
+  --pending-color: #e67e22;
+  --failed-color: #e84545;
+}
+
+.reports-main {
+  max-width: 880px;
+  margin: 2em auto 2em auto;
+  padding: 2em 0 3em 0;
+}
+.page-title {
+  color: var(--primary-color);
+  margin-bottom: 1.6em;
+  text-align: left;
+  font-size: 2rem;
+}
+.course-report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2.1em;
+}
+.course-report-card {
+  background: var(--bg-card);
+  border-radius: 18px;
+  box-shadow: 0 4px 15px rgba(33,152,180,0.09);
+  padding: 1.7em 2.3em 2em 2.3em;
+}
+.course-report-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1.1em;
+  border-bottom: 1.5px solid var(--primary-color);
+  padding-bottom: 0.6em;
+  margin-bottom: 1.1em;
+}
+.course-report-header h2 {
+  color: var(--primary-color);
+  margin: 0;
+  flex: 1;
+  font-size: 1.32em;
+}
+.status-badge {
+  padding: 0.2em 0.9em;
+  border-radius: 13px;
+  font-size: 0.98em;
+  font-weight: bold;
+  color: var(--text-light);
+  margin-right: 0.6em;
+}
+
+.status-badge.completed {
+  background: var(--complete-color);
+}
+.status-badge["in-progress"], .status-badge.in-progress {
+  background: var(--in-progress-color);
+  color: #171d22;
+}
+.status-badge.pending {
+  background: var(--pending-color);
+  color: #fff;
+}
+.status-badge.failed {
+  background: var(--failed-color);
+}
+
+.last-updated {
+  font-size: 0.93em;
+  color: #999;
+}
+.module-list {
+  margin-left: 0.68em;
+  margin-top: 0.9em;
+  display: flex;
+  flex-direction: column;
+  gap: 1.24em;
+}
+.module-report-card {
+  background: var(--bg-light);
+  border-radius: 8px;
+  margin-bottom: .2em;
+  box-shadow: 0 2px 8px rgba(211,66,142,0.07);
+  padding: 1em 1.5em 1em 1.5em;
+}
+.module-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  margin-bottom: 0.7em;
+}
+.module-header h3 {
+  color: var(--accent-color);
+  margin: 0;
+  font-size: 1.07em;
+  flex: 1;
+}
+.lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.01em;
+}
+.lesson-table th, .lesson-table td {
+  padding: 0.45em;
+  border-bottom: 1px solid #e4ebf0;
+  text-align: left;
+}
+.lesson-table th {
+  background: var(--bg-light);
+  color: var(--primary-color);
+  font-size: 0.98em;
+  font-weight: 600;
+}
+.lesson-table td {
+  color: var(--text-dark);
+}
+.status-badge {
+  text-transform: capitalize;
+}
+
+@media (max-width: 780px) {
+  .reports-main {
+    padding: 1.1em 0 2em 0;
+    max-width: 98vw;
+  }
+  .course-report-card {
+    padding: 1em 0.6em 1.2em 0.7em;
+  }
+  .module-report-card {
+    padding: 0.7em 0.6em 0.8em 0.7em;
+  }
+}

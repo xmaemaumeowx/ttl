@@ -26,23 +26,8 @@
         <button id="LoginBtn" class="submit-btn" type="submit">🔒 Log In</button>
       </form>
 
-      <!-- Google Login -->
-      <div id="g_id_onload"
-           data-client_id="51270339019-bq8es3retteuf0798ul8fr91d236bc9q.apps.googleusercontent.com"
-           data-context="signin"
-           data-ux_mode="popup"
-           data-callback="handleCredentialResponse"
-           data-auto_prompt="false">
-      </div>
-
-      <div class="g_id_signin"
-           data-type="standard"
-           data-size="large"
-           data-theme="outline"
-           data-text="signin_with"
-           data-shape="pill"
-           data-logo_alignment="left">
-      </div>
+      <!-- ✅ Place Google Sign-In button here -->
+      <div id="googleSignInDiv" style="margin-top: 15px; text-align: center;"></div>
 
       <div class="forgot">
         <a href="#">Forgot your password?</a>
@@ -60,15 +45,8 @@
             <input type="password" id="signup-password" name="password" placeholder="Password" required autocomplete="new-password"><br>
             <button type="submit">Create Account</button>
           </form>
-          <!-- Google Sign-Up -->
-          <div class="g_id_signin"
-               data-type="standard"
-               data-size="large"
-               data-theme="outline"
-               data-text="signup_with"
-               data-shape="pill"
-               data-logo_alignment="left">
-          </div>
+          <!-- Optional: You can add Google Sign-Up below -->
+          <div id="googleSignUpDiv" style="margin-top: 10px; text-align: center;"></div>
         </div>
       </div>
 
@@ -97,8 +75,28 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- ✅ Scripts -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    window.onload = function () {
+      google.accounts.id.initialize({
+        client_id: "51270339019-bq8es3retteuf0798ul8fr91d236bc9q.apps.googleusercontent.com",
+        callback: handleCredentialResponse,
+      });
+
+      // Google Login Button
+      google.accounts.id.renderButton(
+        document.getElementById("googleSignInDiv"),
+        { theme: "outline", size: "large", shape: "pill" }
+      );
+
+      // Google Sign-Up Button (optional)
+      google.accounts.id.renderButton(
+        document.getElementById("googleSignUpDiv"),
+        { theme: "outline", size: "large", shape: "pill" }
+      );
+    };
+  </script>
   <script src="/script.js"></script>
 </body>
 </html>

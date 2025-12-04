@@ -1,0 +1,69 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar', { activePage: 'projects' }) %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'projects' }) %>
+  <main>
+    <section class="content-section">
+      <div class="project-detail-card">
+        <div class="project-header">
+          <h2>Edit Project</h2>
+        </div>
+        <form action="/projects/edit/<%= project.PROJECT_ID %>" method="POST" autocomplete="off">
+          <div>
+            <label for="name">Project Name</label>
+            <input type="text" id="name" name="name" value="<%= project.NAME %>" required>
+          </div>
+          <div>
+            <label for="description">Description</label>
+            <textarea id="description" name="description" required><%= project.DESCRIPTION %></textarea>
+          </div>
+          <div>
+            <label for="start_date">Start Date</label>
+            <input type="date" id="start_date" name="start_date"
+              value="<%= project.START_DATE ? project.START_DATE.toISOString().split('T')[0] : '' %>" required>
+          </div>
+          <div>
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date"
+              value="<%= project.END_DATE ? project.END_DATE.toISOString().split('T')[0] : '' %>">
+          </div>
+          <div>
+            <label for="technology_stack">Technology Stack</label>
+            <input type="text" id="technology_stack" name="technology_stack" value="<%= project.TECHNOLOGY_STACK || '' %>">
+          </div>
+          <div>
+            <label for="status">Status</label>
+            <select id="status" name="status" required>
+              <option value="Planned" <%= project.STATUS === 'Planned' ? 'selected' : '' %>>Planned</option>
+              <option value="Ongoing" <%= project.STATUS === 'Ongoing' ? 'selected' : '' %>>Ongoing</option>
+              <option value="Completed" <%= project.STATUS === 'Completed' ? 'selected' : '' %>>Completed</option>
+            </select>
+          </div>
+          <div>
+            <label for="track_id">Track</label>
+            <select id="track_id" name="track_id" required>
+              <% tracks.forEach(function(track) { %>
+                <option value="<%= track.TRACK_ID %>" <%= project.TRACK_ID === track.TRACK_ID ? 'selected' : '' %>>
+                  <%= track.TRACK_NAME %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          <div>
+            <label for="github_link">GitHub Link</label>
+            <input type="url" id="github_link" name="github_link" value="<%= project.GITHUB_LINK || '' %>">
+          </div>
+          <div>
+            <label for="live_link">Live Link</label>
+            <input type="url" id="live_link" name="live_link" value="<%= project.LIVE_LINK || '' %>">
+          </div>
+          <div class="project-footer">
+            <button type="submit" class="edit-btn">Save Changes</button>
+            <a href="/projects/<%= project.PROJECT_ID %>" class="back-btn">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= project.NAME %> - Project Details | The Tech Lab</title>
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/project-detail.css">
+</head>
+<body>
+  <%- include('partials/header'); %>
+  <%- include('partials/navbar', { activePage: 'projects' }); %>
+  <div class="dashboard">
+    <%- include('partials/sidebar', { activePage: 'projects' }); %>
+    <main>
+  <section class="content-section">
+    <div class="project-detail-card">
+      <div class="project-header">
+        <h2><%= project.NAME %></h2>
+        <% if (project.STATUS) { %>
+          <span 
+            class="project-status <%= project.STATUS.toLowerCase() %>">
+            <%= project.STATUS %>
+          </span>
+        <% } %>
+      </div>
+      <div class="project-body">
+        <p><strong>Start Date:</strong>
+          <%= project.START_DATE ? project.START_DATE.toISOString().split('T')[0] : 'N/A' %>
+        </p>
+        <p><strong>End Date:</strong>
+          <%= project.END_DATE ? project.END_DATE.toISOString().split('T')[0] : 'N/A' %>
+        </p>
+        <p><strong>Technology Stack:</strong>
+          <%= project.TECHNOLOGY_STACK || 'N/A' %>
+        </p>
+        <p><strong>Description:</strong>
+          <%= project.DESCRIPTION || 'No description provided.' %>
+        </p>
+        <p><strong>Track:</strong>
+          <%= project.TRACK_NAME || 'N/A' %>
+        </p>
+        <p><strong>GitHub Link:</strong>
+          <% if (project.GITHUB_LINK) { %>
+            <a href="<%= project.GITHUB_LINK %>" target="_blank" class="ext-link"><%= project.GITHUB_LINK %></a>
+          <% } else { %> N/A <% } %>
+        </p>
+        <p><strong>Live Link:</strong>
+          <% if (project.LIVE_LINK) { %>
+            <a href="<%= project.LIVE_LINK %>" target="_blank" class="ext-link"><%= project.LIVE_LINK %></a>
+          <% } else { %> N/A <% } %>
+        </p>
+      </div>
+      <div class="project-footer">
+        <a href="/projects/edit/<%= project.PROJECT_ID %>" class="edit-btn">Edit Project</a>
+        <a href="/projects" class="back-btn">Back to Projects</a>
+      </div>
+    </div>
+    <!-- Toast Notifications -->
+    <% if (typeof successMessage !== 'undefined' && successMessage) { %>
+      <div id="toast" class="toast"><%= successMessage %></div>
+    <% } else if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+      <div id="toast" class="toast error"><%= errorMessage %></div>
+    <% } %>
+  </section>
+</main>
+  </div>
+
+  <%- include('partials/footer'); %>

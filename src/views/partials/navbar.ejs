@@ -1,0 +1,19 @@
+<div class="mt-navbar-top">
+  <div class="mt-navbar-left">
+    <div class="mt-logo">
+      <img src="/assets/ttl logo.png" alt="The Tech Lab">
+    </div>
+    <div class="mt-search">
+      <input type="text" placeholder="Search">
+      <span class="mt-search-icon">&#128269;</span>
+    </div>
+  </div>
+  <div class="mt-navbar-right">
+    <span class="mt-nav-link"><span class="mt-icon">&#10067;</span> Help</span>
+    <span class="mt-nav-link"><span class="mt-icon">&#128172;</span> Feedback</span>
+    <span class="mt-nav-link">
+      <span class="mt-icon"><img id="nav-avatar" src="<%= user.avatar || '/assets/student.png' %>" alt="Avatar" style="height:30px;"></span>
+      <a href="/logout" class="btn">Sign Out</a>
+    </span>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+<%- include('partials/header', { pageTitle: 'Calendar' }) %>
+<%- include('partials/navbar') %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'calendar' }) %>
+  <main class="dashboard-main-content">
+      <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+      <div id="calendar"></div>
+      <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        console.log("calendarEl:", calendarEl);
+        if(calendarEl) {
+          var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth'
+          });
+          calendar.render();
+        }
+      });
+      </script>
+      <style>
+      #calendar { min-height: 600px; height: 650px; }
+      </style>
+  </main>
+</div>
+
+<!-- FullCalendar -->
+ <script src = '/script.js'></script>
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+<%- include('partials/footer') %>

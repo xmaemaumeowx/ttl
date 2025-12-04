@@ -1,0 +1,35 @@
+<%- include('partials/header', { pageTitle: pageTitle }) %>
+<%- include('partials/navbar') %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: activePage }) %>
+  <main class="dashboard-main-content">
+    <h1 class="page-title">My Learners</h1>
+    <% if (!learners || learners.length === 0) { %>
+      <p class="no-data">No learners assigned to you.</p>
+    <% } else { %>
+      <table class="learners-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Track</th>
+            <th>Description</th>
+            <th>Duration (weeks)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% learners.forEach(learner => { %>
+            <tr>
+              <td><%= learner.FULL_NAME %></td>
+              <td><%= learner.EMAIL %></td>
+              <td><%= learner.TRACK_NAME %></td>
+              <td><%= learner.TRACK_DESCRIPTION %></td>
+              <td><%= learner.DURATION_WEEKS %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </main>
+</div>
+<%- include('partials/footer') %>

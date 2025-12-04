@@ -1,0 +1,112 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'projects' }) %>
+  <main class="dashboard-main-content">
+    <h1 class="page-title">My Projects</h1>
+
+    <% if (user && user.role === "mentor") { %>
+      <!-- ===== Mentor Table View ===== -->
+      <% if (!projects || projects.length === 0) { %>
+        <p class="no-data">No projects assigned to you as a mentor.</p>
+      <% } else { %>
+        <div style="overflow-x:auto;">
+          <table class="projects-table">
+            <thead>
+              <tr>
+                <th>Project ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Technology Stack</th>
+                <th>GitHub</th>
+                <th>Live Link</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Track ID</th>
+                <th>Learner</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% projects.forEach(project => { %>
+                <tr>
+                  <td><%= project.PROJECT_ID %></td>
+                  <td><%= project.NAME %></td>
+                  <td><%= project.DESCRIPTION %></td>
+                  <td><%= project.STATUS %></td>
+                  <td><%= project.START_DATE ? (new Date(project.START_DATE)).toLocaleDateString() : '' %></td>
+                  <td><%= project.END_DATE ? (new Date(project.END_DATE)).toLocaleDateString() : '' %></td>
+                  <td><%= project.TECHNOLOGY_STACK %></td>
+                  <td>
+                    <% if (project.GITHUB_LINK) { %>
+                      <a href="<%= project.GITHUB_LINK %>" target="_blank">GitHub</a>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (project.LIVE_LINK) { %>
+                      <a href="<%= project.LIVE_LINK %>" target="_blank">Live</a>
+                    <% } %>
+                  </td>
+                  <td><%= project.CREATED_AT ? (new Date(project.CREATED_AT)).toLocaleDateString() : '' %></td>
+                  <td><%= project.UPDATED_AT ? (new Date(project.UPDATED_AT)).toLocaleDateString() : '' %></td>
+                  <td><%= project.TRACK_ID %></td>
+                  <td><%= project.LEARNER_NAME || '' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    <% } else { %>
+      <!-- ===== Learner Card View ===== -->
+      <% if (!projects || projects.length === 0) { %>
+        <p class="no-data">No projects found.</p>
+      <% } else { %>
+        <div class="projects-grid">
+          <% projects.forEach(project => { %>
+            <div class="project-card <%= project.STATUS ? project.STATUS.toLowerCase().replace(' ', '-') : '' %>">
+              <div class="project-header">
+                <h3 class="project-title" title="<%= project.NAME %>"><%= project.NAME %></h3>
+                <% if (project.STATUS) { %>
+                  <span class="project-status <%= project.STATUS.toLowerCase().replace(' ', '-') %>">
+                    <%= project.STATUS %>
+                  </span>
+                <% } %>
+              </div>
+              <div class="project-body">
+                <% if (project.START_DATE) { %>
+                  <p><strong>Start Date:</strong> <%= new Date(project.START_DATE).toLocaleDateString() %></p>
+                <% } %>
+                <% if (project.END_DATE) { %>
+                  <p><strong>End Date:</strong> <%= new Date(project.END_DATE).toLocaleDateString() %></p>
+                <% } else { %>
+                  <p><strong>End Date:</strong> Ongoing</p>
+                <% } %>
+                <% if (project.TECHNOLOGY_STACK) { %>
+                  <p><strong>Technology Stack:</strong> <%= project.TECHNOLOGY_STACK %></p>
+                <% } %>
+                <% if (project.GITHUB_LINK) { %>
+                  <p><strong>GitHub Link:</strong>
+                    <a href="<%= project.GITHUB_LINK %>" target="_blank" class="ext-link">View Repo</a>
+                  </p>
+                <% } %>
+                <% if (project.LIVE_LINK) { %>
+                  <p><strong>Live Link:</strong>
+                    <a href="<%= project.LIVE_LINK %>" target="_blank" class="ext-link">View Project</a>
+                  </p>
+                <% } %>
+              </div>
+              <div class="project-footer">
+                <a href="/projects/<%= project.PROJECT_ID %>" class="view-btn">View Details</a>
+                <a href="/projects/edit/<%= project.PROJECT_ID %>" class="edit-btn">Edit</a>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    <% } %>
+  </main>
+</div>
+<%- include('partials/footer') %>

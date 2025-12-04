@@ -7,3 +7,11 @@ node_modules/
 # Ignore packages
 package-lock.json
 package.json
+
+# Ignore local wallets, keys, and configs
+wallet/
+*.pem
+*.key
+*.crt
+*.env
+.env.local

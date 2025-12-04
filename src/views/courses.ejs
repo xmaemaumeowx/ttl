@@ -1,0 +1,154 @@
+<%- include('partials/header', { pageTitle: 'Courses' }) %>
+<%- include('partials/navbar') %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'courses' }) %>
+  <main class="dashboard-main-content">
+    <h1 class="page-title">My Courses</h1>
+    <% if (user && user.role === "mentor") { %>
+      <div class="mentor-actions" style="text-align:right;margin-bottom:1.2em;">
+        <button id="showAddCourse" type="button">Add Course</button>
+        <button id="showUploadMaterial" type="button">Upload Material</button>
+        <button id="showAddAssignment" type="button">Add Assignment</button>
+      </div>
+      <!-- Add Course Form -->
+      <form id="addCourseForm" class="mentor-form" action="/courses/add" method="POST" style="display:none;">
+        <h3>Add New Course</h3>
+        <input type="text" name="course_name" placeholder="Course Name" required /><br>
+        <input type="text" name="track" placeholder="Track" /><br>
+        <textarea name="description" placeholder="Course Description" rows="5" required></textarea><br>
+        
+        <button type="submit">Add Course</button>
+      </form>
+      <!-- Add Assignment Form -->
+      <form id="addAssignmentForm" class="mentor-form" action="/courses/assignments/add" method="POST" style="display:none;">
+        <h3>Add Assignment</h3>
+        <select name="course_id" required>
+          <option value="">Select Course</option>
+          <% courses.forEach(course => { %>
+            <option value="<%= course.course_id %>"><%= course.name %></option>
+          <% }) %>
+        </select><br>
+        <input type="text" name="title" placeholder="Assignment Title" required><br>
+        <label>Due Date</label><input type="date" name="due_date" placeholder="Due Date" required><br>
+        <textarea name="description" placeholder="Assignment Description" rows="5"></textarea><br>
+        <button type="submit">Add Assignment</button>
+      </form>
+            <!-- Upload Material Form -->
+      <form id="uploadMaterialForm" class="mentor-form" action="/courses/materials/upload" method="POST" enctype="multipart/form-data" style="display:none;">
+        <h3>Upload Course Material/Resource</h3>
+        <select name="course_id" required>
+          <option value="">Select Course</option>
+          <% courses.forEach(course => { %>
+            <option value="<%= course.course_id %>"><%= course.name %></option>
+          <% }) %>
+        </select>
+        <input type="file" name="materialFile" required>
+        <input type="text" name="resource_title" placeholder="Resource Title" rows="5" required>
+        <button type="submit">Upload</button>
+      </form>
+      <% if (!courses || courses.length === 0) { %>
+        <p class="no-data">You have no courses created yet.</p>
+      <% } else { %>
+        <table class="mentor-course-table">
+          <thead>
+            <tr>
+              <th>Course Name</th>
+              <th>Description</th>
+              <th>Assignments</th>
+              <th>Materials</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% courses.forEach(course => { %>
+            <tr>
+              <td><%= course.name %></td>
+              <td><%= course.description %></td>
+              <td>
+                <% if (course.assignments && course.assignments.length > 0) { %>
+                  <ul>
+                    <% course.assignments.forEach(a => { %>
+                      <li>
+                        <%= a.title %> (Due: <%= a.due_date ? new Date(a.due_date).toLocaleDateString() : "TBD" %>)
+                      </li>
+                    <% }) %>
+                  </ul>
+                <% } else { %>
+                  <em>None</em>
+                <% } %>
+              </td>
+              <td>
+                <% if (course.materials && course.materials.length > 0) { %>
+                  <ul>
+                    <% course.materials.forEach(m => { %>
+                      <li><a href="<%= m.link %>" target="_blank"><%= m.title %></a></li>
+                    <% }) %>
+                  </ul>
+                <% } else { %>
+                  <em>None</em>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    <% } else { %>
+      <!-- ===== Learner View ===== -->
+      <% if (!tracks || tracks.length === 0) { %>
+        <p>No courses found. Enroll in a learning track to get started!</p>
+      <% } else { %>
+        <div class="tracks-grid">
+          <% tracks.forEach(track => { %>
+            <div class="track-card">
+              <div class="track-header">
+                <h2><%= track.track %></h2>
+              </div>
+              <div class="track-courses">
+                <% track.courses.forEach(course => { %>
+                  <div class="course-card">
+                    <div class="course-header">
+                      <h3><%= course.course_name %></h3>
+                    </div>
+                    <% if (course.modules && course.modules.length > 0) { %>
+                      <div class="modules-list" id="modules-<%= course.course_id %>">
+                        <ul>
+                          <% course.modules.forEach(module => { %>
+                            <li>
+                              <strong><%= module.module_title %></strong>
+                              (Code: <%= module.module_id %>)
+                            </li>
+                          <% }) %>
+                        </ul>
+                      </div>
+                    <% } else { %>
+                      <div class="modules-list">
+                        <em>No modules available.</em>
+                      </div>
+                    <% } %>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    <% } %>
+  </main>
+</div>
+<%- include('partials/footer') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function hideAllForms() {
+    document.querySelectorAll('.mentor-form').forEach(e => e.style.display = 'none');
+  }
+  document.getElementById('showAddCourse')?.addEventListener('click', () => {
+    hideAllForms(); document.getElementById('addCourseForm').style.display = '';
+  });
+  document.getElementById('showUploadMaterial')?.addEventListener('click', () => {
+    hideAllForms(); document.getElementById('uploadMaterialForm').style.display = '';
+  });
+  document.getElementById('showAddAssignment')?.addEventListener('click', () => {
+    hideAllForms(); document.getElementById('addAssignmentForm').style.display = '';
+  });
+});
+</script>

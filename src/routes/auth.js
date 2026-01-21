@@ -105,7 +105,7 @@ router.post('/google', async (req, res) => {
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-app.post('/auth/google', async (req, res) => {
+router.post('/auth/google', async (req, res) => {
   const { token } = req.body;
 
   try {

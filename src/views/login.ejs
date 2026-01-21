@@ -78,25 +78,55 @@
   <!-- Google One Tap / Sign-In Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    window.onload = function () {
-      // Initialize Google One Tap / Sign-In
-      google.accounts.id.initialize({
-        client_id: "<%= GOOGLE_CLIENT_ID %>", // from Render environment variable
-        callback: handleCredentialResponse
-      });
+    // Grab the client ID from server-side safely
+    const GOOGLE_CLIENT_ID = "<%= GOOGLE_CLIENT_ID || '' %>";
 
-      // Render Google Sign-In button
-      google.accounts.id.renderButton(
-        document.getElementById("googleSignInDiv"),
-        { theme: "outline", size: "large", shape: "pill" }
-      );
+    // Only initialize Google Sign-In if client ID exists
+    if (GOOGLE_CLIENT_ID) {
+      function handleCredentialResponse(response) {
+        fetch('/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: response.credential })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            // Set JWT in cookie
+            document.cookie = `token=${data.jwt}; path=/; max-age=86400`; // 1 day
+            window.location.href = '/dashboard';
+          } else {
+            console.error('Google login failed:', data.message);
+            alert('Google login failed');
+          }
+        })
+        .catch(err => {
+          console.error('Google login error:', err);
+          alert('Error logging in with Google');
+        });
+      }
 
-      // Render Google Sign-Up button
-      google.accounts.id.renderButton(
-        document.getElementById("googleSignUpDiv"),
-        { theme: "outline", size: "large", shape: "pill" }
-      );
-    };
+      window.onload = function () {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse
+        });
+
+        // Render buttons
+        google.accounts.id.renderButton(
+          document.getElementById("googleSignInDiv"),
+          { theme: "outline", size: "large", shape: "pill" }
+        );
+        google.accounts.id.renderButton(
+          document.getElementById("googleSignUpDiv"),
+          { theme: "outline", size: "large", shape: "pill" }
+        );
+
+        google.accounts.id.prompt(); // optional One Tap
+      };
+    } else {
+      console.warn("⚠️ GOOGLE_CLIENT_ID is not set. Google Sign-In disabled.");
+    }
   </script>
 
   <!-- Main JS -->

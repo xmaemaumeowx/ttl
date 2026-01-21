@@ -1,125 +1,70 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library');
-const { findUserByEmail, createUser, verifyUserPassword } = require('../models/userModel');
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const oracledb = require("oracledb");
+const { OAuth2Client } = require("google-auth-library");
 
+// Google client
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Render Login Page
-router.get('/login', (req, res) => {
-  res.render('login', { googleClientId: process.env.GOOGLE_CLIENT_ID });
-});
+// -------------------- EMAIL/PASSWORD LOGIN --------------------
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const connection = req.app.locals.db;
 
-// Render Signup Page
-router.get('/signup', (req, res) => res.render('signup'));
-
-// Manual Signup
-router.post('/signup', async (req, res) => {
-  try {
-    const { full_name, email, password } = req.body;
-    if (!full_name || !email || !password)
-      return res.status(400).json({ error: "All fields are required" });
-
-    const existingUser = await findUserByEmail(email);
-    if (existingUser) return res.status(400).json({ error: "User already exists" });
-
-    await createUser(full_name, email, password, "learner");
-    const newUser = await findUserByEmail(email);
-
-    const token = jwt.sign({
-      userId: newUser.USER_ID,
-      email: newUser.EMAIL,
-      fullName: newUser.FULL_NAME,
-      role: newUser.ROLE
-    }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-    res.cookie("token", token, { httpOnly: true, sameSite: "lax" });
-    res.json({ message: "Signup successful", redirect: "/dashboard" });
-
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ error: "Signup failed" });
+  if (!email || !password) {
+    return res.status(400).send("Email and password are required.");
   }
-});
 
-// Manual Login
-router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await findUserByEmail(email);
+    const result = await connection.execute(
+      "SELECT user_id, full_name, email, password FROM users WHERE email = :email",
+      [email],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
 
-    if (!user || !(await verifyUserPassword(user, password)))
-      return res.status(401).json({ error: "Invalid credentials" });
+    if (!result.rows.length) {
+      return res.status(401).send("Invalid email or password.");
+    }
 
-    const token = jwt.sign({
-      userId: user.USER_ID,
-      email: user.EMAIL,
-      fullName: user.FULL_NAME,
-      role: user.ROLE
-    }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const user = result.rows[0];
 
-    res.cookie("token", token, { httpOnly: true, sameSite: "lax" });
-    res.json({ message: "Login successful", redirect: "/dashboard" });
+    const match = await bcrypt.compare(password, user.PASSWORD);
+    if (!match) {
+      return res.status(401).send("Invalid email or password.");
+    }
+
+    const token = jwt.sign({ userId: user.USER_ID }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    res.cookie("token", token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+    res.redirect("/dashboard");
 
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ error: "Login failed" });
+    res.status(500).send("Internal Server Error");
   }
 });
 
-// Google Login / Signup
-router.post('/google', async (req, res) => {
-  try {
-    const { credential } = req.body;
-    if (!credential) return res.status(400).json({ error: "Missing Google credential" });
+// -------------------- GOOGLE SIGN-IN --------------------
+router.post("/auth/google", async (req, res) => {
+  const { credential } = req.body;
+  const connection = req.app.locals.db;
 
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
-
-    const payload = ticket.getPayload();
-    const { email, name: fullName } = payload;
-
-    let user = await findUserByEmail(email);
-    if (!user) {
-      await createUser(fullName, email, null, "learner");
-      user = await findUserByEmail(email);
-    }
-
-    const token = jwt.sign({
-      userId: user.USER_ID,
-      email: user.EMAIL,
-      fullName: user.FULL_NAME,
-      role: user.ROLE
-    }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-    res.cookie("token", token, { httpOnly: true, sameSite: "lax" });
-    res.json({ message: "Google login successful!", redirect: "/dashboard" });
-
-  } catch (err) {
-    console.error("Google auth error:", err);
-    res.status(500).json({ error: "Google authentication failed" });
-  }
-});
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-router.post('/auth/google', async (req, res) => {
-  const { token } = req.body;
+  if (!credential) return res.status(400).send("Google credential missing.");
 
   try {
     const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    const payload = ticket.getPayload(); // Google user info
+    const payload = ticket.getPayload();
     const email = payload.email;
+    const fullName = payload.name;
 
-    // Check if user exists in DB
-    const result = await connection.execute(
-      `SELECT user_id, full_name, email, role FROM users WHERE email = :email`,
+    // Check if user exists
+    let result = await connection.execute(
+      "SELECT user_id, full_name, email FROM users WHERE email = :email",
       [email],
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
@@ -128,34 +73,23 @@ router.post('/auth/google', async (req, res) => {
     if (result.rows.length) {
       user = result.rows[0];
     } else {
-      // Optional: auto-register Google user
-      const insertResult = await connection.execute(
-        `INSERT INTO users (full_name, email, role) VALUES (:full_name, :email, :role) RETURNING user_id INTO :id`,
-        { full_name: payload.name, email, role: 'learner', id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
+      // Create new user
+      const insert = await connection.execute(
+        "INSERT INTO users (full_name, email, role, password) VALUES (:full_name, :email, 'learner', :password) RETURNING user_id INTO :id",
+        { full_name: fullName, email, password: "" , id: { dir: oracledb.BIND_OUT } },
         { autoCommit: true }
       );
-      user = { user_id: insertResult.outBinds.id[0], full_name: payload.name, email, role: 'learner' };
+      user = { USER_ID: insert.outBinds.id[0], full_name: fullName, email };
     }
 
-    // Create JWT
-    const jwtToken = jwt.sign(
-      { userId: user.USER_ID || user.user_id, email: user.EMAIL || user.email, role: user.ROLE || user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.json({ success: true, user, jwt: jwtToken });
+    const token = jwt.sign({ userId: user.USER_ID }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    res.cookie("token", token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+    res.json({ success: true, redirect: "/dashboard" });
 
   } catch (err) {
-    console.error('Google login error:', err);
-    res.status(401).json({ success: false, message: 'Invalid Google token' });
+    console.error("Google login error:", err);
+    res.status(500).send("Internal Server Error");
   }
-});
-
-// Logout
-router.get('/logout', (req, res) => {
-  res.clearCookie("token");
-  res.redirect("/login");
 });
 
 module.exports = router;

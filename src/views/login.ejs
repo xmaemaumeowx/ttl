@@ -15,16 +15,13 @@
       <div class="logo"><h1>The Tech Lab</h1></div>
 
       <h2>Log In</h2>
-      <form id="loginForm">
-        <div class="form-group">
-          <input type="email" id="email" name="email" placeholder="Email address" required autocomplete="email">
-        </div>
-        <div class="form-group">
-          <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password">
-        </div>
+        <form id="loginForm" action="/login" method="POST">
+          <input type="email" name="email" placeholder="Email address" required>
+          <input type="password" name="password" placeholder="Password" required>
+          <button type="submit">Log In</button>
         <label><input type="checkbox"> Remember Me</label>
         <button id="LoginBtn" class="submit-btn" type="submit">🔒 Log In</button>
-      </form>
+        </form>
 
       <!-- Google Sign-In Button -->
       <div id="googleSignInDiv" style="margin-top: 15px; text-align: center;"></div>
@@ -76,58 +73,28 @@
   </div>
 
   <!-- Google One Tap / Sign-In Script -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    // Grab the client ID from server-side safely
-    const GOOGLE_CLIENT_ID = "<%= GOOGLE_CLIENT_ID || '' %>";
-
-    // Only initialize Google Sign-In if client ID exists
-    if (GOOGLE_CLIENT_ID) {
-      function handleCredentialResponse(response) {
-        fetch('/auth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: response.credential })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            // Set JWT in cookie
-            document.cookie = `token=${data.jwt}; path=/; max-age=86400`; // 1 day
-            window.location.href = '/dashboard';
-          } else {
-            console.error('Google login failed:', data.message);
-            alert('Google login failed');
-          }
-        })
-        .catch(err => {
-          console.error('Google login error:', err);
-          alert('Error logging in with Google');
+  // Google One Tap / Sign-In
+  window.onload = function() {
+    google.accounts.id.initialize({
+      client_id: "<%= GOOGLE_CLIENT_ID %>",
+      callback: async (response) => {
+        const res = await fetch("/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credential: response.credential })
         });
+        const data = await res.json();
+        if (data.redirect) window.location.href = data.redirect;
       }
+    });
+    google.accounts.id.renderButton(
+      document.getElementById("googleSignInDiv"),
+      { theme: "outline", size: "large", shape: "pill" }
+    );
+  };
+</script>
 
-      window.onload = function () {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleCredentialResponse
-        });
-
-        // Render buttons
-        google.accounts.id.renderButton(
-          document.getElementById("googleSignInDiv"),
-          { theme: "outline", size: "large", shape: "pill" }
-        );
-        google.accounts.id.renderButton(
-          document.getElementById("googleSignUpDiv"),
-          { theme: "outline", size: "large", shape: "pill" }
-        );
-
-        google.accounts.id.prompt(); // optional One Tap
-      };
-    } else {
-      console.warn("⚠️ GOOGLE_CLIENT_ID is not set. Google Sign-In disabled.");
-    }
-  </script>
 
   <!-- Main JS -->
   <script src="/script.js"></script>

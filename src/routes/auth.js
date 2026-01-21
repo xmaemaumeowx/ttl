@@ -102,7 +102,7 @@ router.post('/google', async (req, res) => {
     res.status(500).json({ error: "Google authentication failed" });
   }
 });
-const { OAuth2Client } = require('google-auth-library');
+
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 app.post('/auth/google', async (req, res) => {

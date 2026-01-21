@@ -81,7 +81,7 @@
     window.onload = function () {
       // Initialize Google One Tap / Sign-In
       google.accounts.id.initialize({
-        client_id: "<%= googleClientId %>",
+        client_id: "<%= GOOGLE_CLIENT_ID %>", // from Render environment variable
         callback: handleCredentialResponse
       });
 

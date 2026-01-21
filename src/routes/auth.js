@@ -103,6 +103,55 @@ router.post('/google', async (req, res) => {
     res.status(500).json({ error: "Google authentication failed" });
   }
 });
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+app.post('/auth/google', async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload(); // Google user info
+    const email = payload.email;
+
+    // Check if user exists in DB
+    const result = await connection.execute(
+      `SELECT user_id, full_name, email, role FROM users WHERE email = :email`,
+      [email],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    let user;
+    if (result.rows.length) {
+      user = result.rows[0];
+    } else {
+      // Optional: auto-register Google user
+      const insertResult = await connection.execute(
+        `INSERT INTO users (full_name, email, role) VALUES (:full_name, :email, :role) RETURNING user_id INTO :id`,
+        { full_name: payload.name, email, role: 'learner', id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
+        { autoCommit: true }
+      );
+      user = { user_id: insertResult.outBinds.id[0], full_name: payload.name, email, role: 'learner' };
+    }
+
+    // Create JWT
+    const jwtToken = jwt.sign(
+      { userId: user.USER_ID || user.user_id, email: user.EMAIL || user.email, role: user.ROLE || user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.json({ success: true, user, jwt: jwtToken });
+
+  } catch (err) {
+    console.error('Google login error:', err);
+    res.status(401).json({ success: false, message: 'Invalid Google token' });
+  }
+});
 
 // Logout
 router.get('/logout', (req, res) => {

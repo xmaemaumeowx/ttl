@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const { findUserByEmail, createUser, verifyUserPassword } = require('../models/userModel');
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Render Login Page
 router.get('/login', (req, res) => {

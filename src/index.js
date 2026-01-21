@@ -11,6 +11,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.get("/", (req, res) => res.render("index"));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(bodyParser.json());
@@ -98,11 +100,11 @@ function requireAuth(req, res, next) {
 app.get("/", (req, res) => res.render("index"));
 
 // Dashboard
-app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
+/*app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
   try {
     const result = await connection.execute(
       `SELECT user_id, full_name, email, role, avatar FROM users WHERE user_id = :userId`,
-      [req.user.userId], { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      { userId: req.user.userId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
     const dbUser = result.rows[0];
     if (dbUser) {
@@ -116,12 +118,21 @@ app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
     }
     res.render("dashboard", {
       pageTitle: "Dashboard | The Tech Lab",
-      activePage: "dashboard"
+      activePage: "dashboard",
+      user: res.locals.user
     });
   } catch (err) {
     console.error("Error fetching user info:", err);
     res.status(500).send("Unable to load dashboard.");
   }
+});*/
+app.get("/dashboard", requireAuth, loadUserFromDB, (req, res) => {
+  // No need to re-query user, data is already in res.locals.user!
+  res.render("dashboard", {
+    pageTitle: "Dashboard | The Tech Lab",
+    activePage: "dashboard",
+    user: res.locals.user,
+  });
 });
 
 // Calendar

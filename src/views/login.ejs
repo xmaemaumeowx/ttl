@@ -26,7 +26,7 @@
         <button id="LoginBtn" class="submit-btn" type="submit">🔒 Log In</button>
       </form>
 
-      <!-- ✅ Place Google Sign-In button here -->
+      <!-- Google Sign-In Button -->
       <div id="googleSignInDiv" style="margin-top: 15px; text-align: center;"></div>
 
       <div class="forgot">
@@ -45,7 +45,7 @@
             <input type="password" id="signup-password" name="password" placeholder="Password" required autocomplete="new-password"><br>
             <button type="submit">Create Account</button>
           </form>
-          <!-- Optional: You can add Google Sign-Up below -->
+          <!-- Google Sign-Up Button -->
           <div id="googleSignUpDiv" style="margin-top: 10px; text-align: center;"></div>
         </div>
       </div>
@@ -75,28 +75,31 @@
     </div>
   </div>
 
-  <!-- ✅ Scripts -->
+  <!-- Google One Tap / Sign-In Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     window.onload = function () {
+      // Initialize Google One Tap / Sign-In
       google.accounts.id.initialize({
-        client_id: "51270339019-bq8es3retteuf0798ul8fr91d236bc9q.apps.googleusercontent.com",
-        callback: handleCredentialResponse,
+        client_id: "<%= googleClientId %>",
+        callback: handleCredentialResponse
       });
 
-      // Google Login Button
+      // Render Google Sign-In button
       google.accounts.id.renderButton(
         document.getElementById("googleSignInDiv"),
         { theme: "outline", size: "large", shape: "pill" }
       );
 
-      // Google Sign-Up Button (optional)
+      // Render Google Sign-Up button
       google.accounts.id.renderButton(
         document.getElementById("googleSignUpDiv"),
         { theme: "outline", size: "large", shape: "pill" }
       );
     };
   </script>
+
+  <!-- Main JS -->
   <script src="/script.js"></script>
 </body>
 </html>

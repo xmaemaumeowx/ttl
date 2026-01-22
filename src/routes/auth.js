@@ -44,12 +44,22 @@ router.post("/login", async (req, res) => {
 });
 
 // -------------------- GOOGLE SIGN-IN --------------------
+const express = require("express");
+const router = express.Router();
+const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
+const { getConnection } = require("../db/oracle");
+const oracledb = require("oracledb");
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 router.post("/auth/google", async (req, res) => {
+  let connection;
+
   try {
     const { credential } = req.body;
-
     if (!credential) {
-      return res.status(400).json({ error: "Missing Google credential" });
+      return res.status(400).json({ error: "Missing credential" });
     }
 
     const ticket = await client.verifyIdToken({
@@ -57,56 +67,56 @@ router.post("/auth/google", async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    const payload = ticket.getPayload();
-    const email = payload.email;
-    const fullName = payload.name;
+    const { email, name, sub } = ticket.getPayload();
 
-    const db = req.app.locals.db;
+    connection = await getConnection();
 
-    // 🔍 Check user
-    const result = await db.execute(
+    const userResult = await connection.execute(
       `SELECT user_id FROM users WHERE email = :email`,
-      [email],
-      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      [email]
     );
 
     let userId;
 
-    if (result.rows.length === 0) {
-      // 🆕 Create user
-      const insert = await db.execute(
-        `INSERT INTO users (full_name, email, role)
-         VALUES (:fullName, :email, 'learner')
+    if (userResult.rows.length === 0) {
+      const insertResult = await connection.execute(
+        `INSERT INTO users (full_name, email, google_id)
+         VALUES (:name, :email, :gid)
          RETURNING user_id INTO :id`,
         {
-          fullName,
+          name,
           email,
+          gid: sub,
           id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
-        },
-        { autoCommit: true }
+        }
       );
-      userId = insert.outBinds.id[0];
+      userId = insertResult.outBinds.id[0];
+      await connection.commit();
     } else {
-      userId = result.rows[0].USER_ID;
+      userId = userResult.rows[0].USER_ID;
     }
-    // 2. Generate JWT
-    const token = jwt.sign({ userId },process.env.JWT_SECRET,{ expiresIn: "7d" });
 
-    // 3. Set cookie & respond JSON
-res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-    });
+    const token = jwt.sign(
+      { userId, email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    // ✅ JSON ONLY
-    return res.json({ success: true });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      })
+      .json({ success: true });
 
   } catch (err) {
-    console.error("Google auth error:", err);
-    return res.status(500).json({ error: "Google authentication failed" });
+    console.error("🔥 Google auth failed:", err);
+    res.status(500).json({ error: "Google authentication failed" });
+  } finally {
+    if (connection) await connection.close();
   }
 });
 
-module.exports = router;
-
+  module.exports = router;

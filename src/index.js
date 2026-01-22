@@ -10,6 +10,19 @@ const bcrypt = require('bcrypt');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const { initOracle } = require("./db/oracle");
+
+(async () => {
+  try {
+    await initOracle();
+    console.log("🟢 Oracle DB ready");
+  } catch (err) {
+    console.error("🔴 Oracle DB failed to initialize", err);
+    process.exit(1);
+  }
+})();
+
+
 // Middleware
 app.get("/", (req, res) => res.render("index"));
 
@@ -71,23 +84,6 @@ app.set("views", path.join(__dirname, "views"));
 // ---- AUTH ROUTES ----
 const authRoutes = require("./routes/auth");
 app.use("/", authRoutes);
-
-// ---- ORACLE DB ----
-let connection;
-async function initDB() {
-  try {
-    connection = await oracledb.getConnection({
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      connectString: process.env.DB_CONNECT_STRING,
-    });
-    console.log("✅ Connected to Oracle DB");
-  } catch (err) {
-    console.error("❌ Oracle DB connection error:", err);
-  }
-}
-initDB();
-app.locals.db = connection;
 
 // ---- AUTH CHECK ----
 function requireAuth(req, res, next) {

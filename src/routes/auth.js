@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const oracledb = require("oracledb");
+const { getConnection } = require("../db/oracle");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -44,15 +45,6 @@ router.post("/login", async (req, res) => {
 });
 
 // -------------------- GOOGLE SIGN-IN --------------------
-const express = require("express");
-const router = express.Router();
-const jwt = require("jsonwebtoken");
-const { OAuth2Client } = require("google-auth-library");
-const { getConnection } = require("../db/oracle");
-const oracledb = require("oracledb");
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 router.post("/auth/google", async (req, res) => {
   let connection;
 

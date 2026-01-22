@@ -15,12 +15,12 @@
       <div class="logo"><h1>The Tech Lab</h1></div>
 
       <h2>Log In</h2>
-        <form id="loginForm" action="/login" method="POST">
-          <input type="email" name="email" placeholder="Email address" required>
-          <input type="password" name="password" placeholder="Password" required>
-        <label><input type="checkbox"> Remember Me</label>
+      <form id="loginForm" action="/login" method="POST">
+        <input type="email" name="email" placeholder="Email address" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <label><input type="checkbox" name="remember"> Remember Me</label>
         <button id="LoginBtn" class="submit-btn" type="submit">🔒 Log In</button>
-        </form>
+      </form>
 
       <!-- Google Sign-In Button -->
       <div id="googleSignInDiv" style="margin-top: 15px; text-align: center;"></div>
@@ -35,7 +35,7 @@
         <div class="modal-content">
           <span class="close" id="close-signup">&times;</span>
           <h2>Sign Up</h2>
-          <form id="signupForm">
+          <form id="signupForm" action="/signup" method="POST">
             <input type="text" id="signup-name" name="full_name" placeholder="Full Name" required autocomplete="name"><br>
             <input type="email" id="signup-email" name="email" placeholder="Email" required autocomplete="email"><br>
             <input type="password" id="signup-password" name="password" placeholder="Password" required autocomplete="new-password"><br>
@@ -74,31 +74,27 @@
   <!-- Google One Tap / Sign-In Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    // Grab the client ID from server-side safely
+    // Server-injected Google client ID
     const GOOGLE_CLIENT_ID = "<%= GOOGLE_CLIENT_ID || '' %>";
 
-    // Only initialize Google Sign-In if client ID exists
     if (GOOGLE_CLIENT_ID) {
-        async function handleCredentialResponse(response) {
-  try {
-    const res = await fetch("/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credential: response.credential }),
-    });
+      async function handleCredentialResponse(response) {
+        try {
+          const res = await fetch("/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential: response.credential }),
+          });
 
-    const data = await res.json();
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Login failed");
 
-    if (!res.ok) {
-      throw new Error(data.error || "Login failed");
-    }
-
-    window.location.href = "/dashboard";
-  } catch (err) {
-    console.error("Google login error:", err);
-    alert("Error logging in with Google");
-  }
-}
+          window.location.href = "/dashboard";
+        } catch (err) {
+          console.error("Google login error:", err);
+          alert("Error logging in with Google");
+        }
+      }
 
       window.onload = function () {
         google.accounts.id.initialize({
@@ -106,7 +102,6 @@
           callback: handleCredentialResponse
         });
 
-        // Render buttons
         google.accounts.id.renderButton(
           document.getElementById("googleSignInDiv"),
           { theme: "outline", size: "large", shape: "pill" }
@@ -119,7 +114,7 @@
         google.accounts.id.prompt(); // optional One Tap
       };
     } else {
-      console.warn("⚠️ GOOGLE_CLIENT_ID is not set. Google Sign-In disabled.");
+      console.warn("⚠️ GOOGLE_CLIENT_ID not set. Google Sign-In disabled.");
     }
   </script>
 

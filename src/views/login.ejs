@@ -79,24 +79,27 @@
 
     // Only initialize Google Sign-In if client ID exists
     if (GOOGLE_CLIENT_ID) {
-      function handleCredentialResponse(response) {
-  fetch("/auth/google", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ credential: response.credential })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.redirect) {
-      window.location.href = data.redirect;
-    } else if (data.error) {
-      alert(data.error);
+        async function handleCredentialResponse(response) {
+  try {
+    const res = await fetch("/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential: response.credential }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Login failed");
     }
-  })
-  .catch(err => {
+
+    window.location.href = "/dashboard";
+  } catch (err) {
     console.error("Google login error:", err);
-  });
+    alert("Error logging in with Google");
+  }
 }
+
       window.onload = function () {
         google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,

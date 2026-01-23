@@ -85,13 +85,29 @@ app.get("/login", (req, res) => {
 });
 
 // Dashboard
-app.get("/dashboard", requireAuth, loadUserFromDB, (req, res) => {
-  res.render("dashboard", {
-    pageTitle: "Dashboard | The Tech Lab",
-    activePage: "dashboard",
-    user: res.locals.user,
-  });
+app.get('/dashboard', requireAuth, loadUserFromDB, async (req, res) => {
+  try {
+    // Fetch announcements from DB
+    const result = await db.query(`SELECT * FROM announcements ORDER BY created_at DESC LIMIT 5`);
+    const announcements = result.rows;
+
+    res.render('dashboard', {
+      pageTitle: "Dashboard | The Tech Lab",
+      activePage: "dashboard",
+      user: res.locals.user,
+      announcements
+    });
+  } catch (err) {
+    console.error("Error loading dashboard:", err);
+    res.render('dashboard', {
+      pageTitle: "Dashboard | The Tech Lab",
+      activePage: "dashboard",
+      user: res.locals.user,
+      announcements: []
+    });
+  }
 });
+
 
 //Projects
 app.get("/projects", requireAuth, loadUserFromDB, (req, res) => {
@@ -117,21 +133,6 @@ app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
 const calendarRoutes = require('./routes/calendar');
 app.use('/calendar', calendarRoutes);
 
-//Announcements
-app.get('/dashboard', requireAuth, loadUserFromDB, async (req, res) => {
-  try {
-    const announcements = await getAnnouncements();
-    res.render('dashboard', {
-      pageTitle: "Dashboard | The Tech Lab",
-      activePage: "dashboard",
-      user: res.locals.user,
-      announcements
-    });
-  } catch (err) {
-    console.error("Error loading dashboard:", err);
-    res.render('dashboard', { pageTitle: "Dashboard | The Tech Lab", activePage: "dashboard", user: res.locals.user, announcements: [] });
-  }
-});
 
 // Learners (mentor view)
 app.get("/learners", requireAuth, loadUserFromDB, async (req, res) => {

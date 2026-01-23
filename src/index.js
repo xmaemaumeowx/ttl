@@ -110,17 +110,51 @@ app.get('/dashboard', requireAuth, loadUserFromDB, async (req, res) => {
 
 
 //Projects
-app.get("/projects", requireAuth, loadUserFromDB, (req, res) => {
-  res.render("projects", {
-    pageTitle: "Projects | The Tech Lab",
-    activePage: "projects",
-    user: res.locals.user,
-  });
+app.get("/projects", requireAuth, loadUserFromDB, async (req, res) => {
+  try {
+    let projects;
+
+    if (res.locals.user.role === "mentor") {
+      // Mentor: show projects assigned to their learners
+      const sql = `
+        SELECT p.*, u.full_name AS learner_name, lt.track_name
+        FROM projects p
+        LEFT JOIN users u ON p.learner_id = u.user_id
+        LEFT JOIN learning_tracks lt ON p.track_id = lt.track_id
+        WHERE p.mentor_id = $1
+        ORDER BY p.created_at DESC
+      `;
+      const result = await db.query(sql, [res.locals.user.userId]);
+      projects = result.rows;
+    } else {
+      // Learner: show their own projects
+      const sql = `
+        SELECT p.*, lt.track_name
+        FROM projects p
+        LEFT JOIN learning_tracks lt ON p.track_id = lt.track_id
+        WHERE p.learner_id = $1
+        ORDER BY p.created_at DESC
+      `;
+      const result = await db.query(sql, [res.locals.user.userId]);
+      projects = result.rows;
+    }
+
+    res.render("projects", {
+      pageTitle: "Projects | The Tech Lab",
+      activePage: "projects",
+      user: res.locals.user,
+      projects
+    });
+  } catch (err) {
+    console.error("Error loading projects:", err);
+    res.render("projects", {
+      pageTitle: "Projects | The Tech Lab",
+      activePage: "projects",
+      user: res.locals.user,
+      projects: []
+    });
+  }
 });
-
-const projectRoutes = require('./routes/projects');
-app.use('/projects', projectRoutes);
-
 
 // Calendar
 app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {

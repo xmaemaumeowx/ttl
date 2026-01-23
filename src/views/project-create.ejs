@@ -1,0 +1,73 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar', { activePage: 'projects' }) %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'projects' }) %>
+  <main>
+    <section class="content-section">
+      <div class="project-detail-card">
+        <div class="project-header">
+          <h2>Create New Project</h2>
+        </div>
+        <form action="/projects/create" method="POST" autocomplete="off">
+          <div>
+            <label for="name">Project Name</label>
+            <input type="text" id="name" name="name" required>
+          </div>
+          <div>
+            <label for="description">Description</label>
+            <textarea id="description" name="description" required></textarea>
+          </div>
+          <div>
+            <label for="start_date">Start Date</label>
+            <input type="date" id="start_date" name="start_date" required>
+          </div>
+          <div>
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date">
+          </div>
+          <div>
+            <label for="technology_stack">Technology Stack</label>
+            <input type="text" id="technology_stack" name="technology_stack">
+          </div>
+          <div>
+            <label for="status">Status</label>
+            <select id="status" name="status" required>
+              <option value="Planned">Planned</option>
+              <option value="Ongoing">Ongoing</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div>
+            <label for="track_id">Track</label>
+            <select id="track_id" name="track_id" required>
+              <% tracks.forEach(track => { %>
+                <option value="<%= track.track_id %>"><%= track.track_name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="learner_id">Assign to Learner</label>
+            <select id="learner_id" name="learner_id" required>
+              <% learners.forEach(learner => { %>
+                <option value="<%= learner.user_id %>"><%= learner.full_name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="github_link">GitHub Link</label>
+            <input type="url" id="github_link" name="github_link">
+          </div>
+          <div>
+            <label for="live_link">Live Link</label>
+            <input type="url" id="live_link" name="live_link">
+          </div>
+          <div class="project-footer">
+            <button type="submit" class="edit-btn">Create Project</button>
+            <a href="/projects" class="back-btn">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+<%- include('partials/footer') %>

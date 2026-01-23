@@ -93,7 +93,27 @@ app.get("/dashboard", requireAuth, loadUserFromDB, (req, res) => {
   });
 });
 
+//Projects
+app.get("/projects", requireAuth, loadUserFromDB, (req, res) => {
+  res.render("projects", {
+    pageTitle: "Projects | The Tech Lab",
+    activePage: "projects",
+    user: res.locals.user,
+  });
+});
+
+const projectRoutes = require('./routes/projects');
+app.use('/projects', projectRoutes);
+
+
 // Calendar
+app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
+  res.render("calendar", {
+    pageTitle: "Calendar | The Tech Lab",
+    activePage: "calendar",
+    user: res.locals.user,
+  });
+});
 const calendarRoutes = require('./routes/calendar');
 app.use('/calendar', calendarRoutes);
 
@@ -234,14 +254,7 @@ app.post("/profile/password", requireAuth, async (req, res) => {
   }
 });
 
-// ---- COURSES, PROJECTS, LOGOUT etc. ----
-// All remaining routes: follow the same pattern
-// Replace:
-//   - :param -> $1, $2
-//   - connection.execute(...) -> await db.query(...)
-//   - autoCommit: true -> unnecessary in PostgreSQL
-// ---- Example for courses, projects ----
-// (You can reuse your existing queries with $1 placeholders)
+
 
 app.get("/logout", (req, res) => {
   res.clearCookie("token");

@@ -249,7 +249,6 @@ app.get("/settings", requireAuth, loadUserFromDB, async (req, res) => {
 });
 
 // AVATAR UPLOAD
-const multer = require("multer");
 const cloudinaryStorage = require("./config/cloudinaryStorage");
 const upload = multer({ storage: cloudinaryStorage });
 

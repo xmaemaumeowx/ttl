@@ -3,7 +3,6 @@ const router = express.Router();
 const { getProjects, getProjectById, updateProject, deleteProject } = require('../models/projectModel');
 const db = require('../db/postgres');
 const { createProject } = require('../models/projectModel');
-const { deleteProject } = require('../models/projectModel');
 
 // Middleware: require authentication
 function requireAuth(req, res, next) {

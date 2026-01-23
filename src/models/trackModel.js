@@ -1,27 +1,44 @@
-const oracledb = require('oracledb');
-const db = require('../config/db'); // Import Oracle DB connection
+// src/models/trackModel.js
+const db = require('../db/postgres'); // Import PostgreSQL pool
 
-// Function to create a new track in the Oracle DB
+// Function to create a new track in PostgreSQL
 const createTrackInDB = async (trackData) => {
-  const connection = await oracledb.getConnection();
-  const sql = `INSERT INTO learning_tracks (track_name, description, duration_weeks)
-               VALUES (:track_name, :description, :duration_weeks) RETURNING track_id INTO :track_id`;
-  const result = await connection.execute(sql, {
-    track_name: trackData.track_name,
-    description: trackData.description,
-    duration_weeks: trackData.duration_weeks,
-    track_id: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT }
-  });
-  await connection.commit();
-  return result.outBinds.track_id[0];
+  const sql = `
+    INSERT INTO learning_tracks (track_name, description, duration_weeks, is_active, created_at)
+    VALUES ($1, $2, $3, TRUE, NOW())
+    RETURNING track_id
+  `;
+  const values = [
+    trackData.track_name,
+    trackData.description,
+    trackData.duration_weeks
+  ];
+
+  try {
+    const result = await db.query(sql, values);
+    return result.rows[0].track_id;
+  } catch (err) {
+    console.error('Error inserting track:', err);
+    throw err;
+  }
 };
 
-// Function to fetch all tracks
+// Function to fetch all active tracks
 const getTracksFromDB = async () => {
-  const connection = await oracledb.getConnection();
-  const sql = 'SELECT * FROM learning_tracks WHERE is_active = \'Y\'';
-  const result = await connection.execute(sql);
-  return result.rows;
+  const sql = `
+    SELECT track_id, track_name, description, duration_weeks, is_active, created_at
+    FROM learning_tracks
+    WHERE is_active = TRUE
+    ORDER BY created_at DESC
+  `;
+
+  try {
+    const result = await db.query(sql);
+    return result.rows;
+  } catch (err) {
+    console.error('Error fetching tracks:', err);
+    throw err;
+  }
 };
 
 module.exports = { createTrackInDB, getTracksFromDB };

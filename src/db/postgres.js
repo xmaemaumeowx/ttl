@@ -1,28 +1,80 @@
-// src/db/postgres.js
+/**
+ * PostgreSQL DB Layer
+ * -------------------
+ * Environment:
+ *   DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
+ */
+
 const { Pool } = require("pg");
-require("dotenv").config();
+
+// Fail fast if DATABASE_URL is missing
+if (!process.env.DATABASE_URL) {
+  console.error("❌ DATABASE_URL is not set");
+  process.exit(1);
+}
 
 const pool = new Pool({
-  host: process.env.PG_HOST,
-  port: process.env.PG_PORT || 5432,
-  database: process.env.PG_DATABASE,
-  user: process.env.PG_USER,
-  password: process.env.PG_PASSWORD,
-  ssl: process.env.PG_SSL === "true" ? { rejectUnauthorized: false } : false,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    require: true,
+    rejectUnauthorized: false, // required for Neon / Render
+  },
+  max: 10,                    // connection pool size
+  idleTimeoutMillis: 30000,   // close idle clients after 30s
+  connectionTimeoutMillis: 10000, // fail fast if DB is unreachable
 });
 
-// Generic query helper
-async function query(text, params) {
-  const client = await pool.connect();
+// Optional: log successful connection once
+pool.on("connect", () => {
+  console.log("✅ PostgreSQL pool connected");
+});
+
+// Log unexpected errors (don’t crash silently)
+pool.on("error", (err) => {
+  console.error("🔥 Unexpected PostgreSQL error", err);
+  process.exit(1);
+});
+
+/**
+ * Run a parameterized query safely
+ */
+async function query(text, params = []) {
+  const start = Date.now();
   try {
-    const res = await client.query(text, params);
+    const res = await pool.query(text, params);
+    const duration = Date.now() - start;
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log("📊 query", {
+        text,
+        duration: `${duration}ms`,
+        rows: res.rowCount,
+      });
+    }
+
     return res;
-  } finally {
-    client.release();
+  } catch (err) {
+    console.error("❌ DB query failed", {
+      text,
+      params,
+      error: err.message,
+    });
+    throw err;
   }
 }
 
+/**
+ * Graceful shutdown (Render / SIGTERM)
+ */
+async function close() {
+  console.log("🛑 Closing PostgreSQL pool...");
+  await pool.end();
+}
+
+process.on("SIGTERM", close);
+process.on("SIGINT", close);
+
 module.exports = {
-  query,
   pool,
+  query,
 };

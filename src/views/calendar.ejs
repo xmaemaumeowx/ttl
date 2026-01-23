@@ -2,30 +2,79 @@
 <%- include('partials/navbar') %>
 <div class="dashboard">
   <%- include('partials/sidebar', { activePage: 'calendar' }) %>
+  
   <main class="dashboard-main-content">
-      <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
-      <div id="calendar"></div>
-      <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-      <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
-        console.log("calendarEl:", calendarEl);
-        if(calendarEl) {
-          var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth'
-          });
-          calendar.render();
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+
+    <div id="calendar"></div>
+
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const calendarEl = document.getElementById('calendar');
+
+  if(calendarEl) {
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      selectable: true,
+      editable: true,
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      events: '/calendar/events', // fetch from backend
+
+      select: async function(info) {
+        const title = prompt('Enter event title:');
+        if (title) {
+          try {
+            const res = await fetch('/calendar/events', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title,
+                start: info.startStr,
+                end: info.endStr,
+                all_day: info.allDay
+              })
+            });
+            const newEvent = await res.json();
+            calendar.addEvent(newEvent);
+          } catch (err) {
+            alert('Failed to create event');
+            console.error(err);
+          }
         }
-      });
-      </script>
-      <style>
-      #calendar { min-height: 600px; height: 650px; }
-      </style>
+        calendar.unselect();
+      },
+
+      eventClick: async function(info) {
+        if(confirm(`Delete event "${info.event.title}"?`)) {
+          try {
+            await fetch(`/calendar/events/${info.event.id}`, { method: 'DELETE' });
+            info.event.remove();
+          } catch (err) {
+            alert('Failed to delete event');
+            console.error(err);
+          }
+        }
+      }
+    });
+
+    calendar.render();
+  }
+});
+</script>
+
+
+    <style>
+      #calendar { min-height: 600px; height: 650px; margin-top: 20px; }
+    </style>
   </main>
 </div>
 
-<!-- FullCalendar -->
- <script src = '/script.js'></script>
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
 <%- include('partials/footer') %>

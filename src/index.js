@@ -94,9 +94,9 @@ app.get("/dashboard", requireAuth, loadUserFromDB, (req, res) => {
 });
 
 // Calendar
-app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
-  res.render("calendar", { activePage: "calendar" });
-});
+const calendarRoutes = require('./routes/calendar');
+app.use('/calendar', calendarRoutes);
+
 
 // Learners (mentor view)
 app.get("/learners", requireAuth, loadUserFromDB, async (req, res) => {

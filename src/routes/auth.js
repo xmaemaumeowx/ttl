@@ -10,7 +10,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // -------------------------
 // POST /auth/google
 // -------------------------
-router.post("/google", async (req, res) => {
+router.post("/auth/google", async (req, res) => {
   const { credential } = req.body;
   if (!credential) return res.status(400).json({ error: "Missing credential" });
 

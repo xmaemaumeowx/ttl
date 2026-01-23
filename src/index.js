@@ -249,30 +249,34 @@ app.get("/settings", requireAuth, loadUserFromDB, async (req, res) => {
 });
 
 // AVATAR UPLOAD
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, "../public/uploads/avatars")),
-  filename: (req, file, cb) => cb(null, `${req.user.userId}_${Date.now()}_${file.originalname}`),
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) return cb(new Error("Only image files are allowed!"), false);
-    cb(null, true);
-  },
-});
+const multer = require("multer");
+const cloudinaryStorage = require("./config/cloudinaryStorage");
+const upload = multer({ storage: cloudinaryStorage });
 
-app.post("/profile/avatar", requireAuth, upload.single("avatar"), async (req, res) => {
-  if (!req.file) return res.redirect("/settings?error=No%20file%20uploaded");
-  const avatarPath = `/uploads/avatars/${req.file.filename}`;
-  try {
-    await db.query("UPDATE users SET avatar = $1 WHERE user_id = $2", [avatarPath, req.user.userId]);
-    res.redirect("/settings?success=Avatar%20updated%20successfully!");
-  } catch (err) {
-    console.error("Avatar upload error:", err);
-    res.redirect("/settings?error=Failed%20to%20update%20avatar");
+// AVATAR UPLOAD (CLOUDINARY)
+app.post(
+  "/profile/avatar",
+  requireAuth,
+  upload.single("avatar"),
+  async (req, res) => {
+    if (!req.file || !req.file.path) {
+      return res.redirect("/settings?error=Upload%20failed");
+    }
+
+    try {
+      await db.query(
+        "UPDATE users SET avatar = $1 WHERE user_id = $2",
+        [req.file.path, req.user.userId]
+      );
+
+      res.redirect("/settings?success=Avatar%20updated%20successfully!");
+    } catch (err) {
+      console.error("Cloudinary upload error:", err);
+      res.redirect("/settings?error=Failed%20to%20update%20avatar");
+    }
   }
-});
+);
+
 
 // PROFILE UPDATE
 app.post("/profile/update", requireAuth, async (req, res) => {

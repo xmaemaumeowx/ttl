@@ -60,7 +60,23 @@
                 <div>
                   <div class="announcement-name">Dianne Russell <span class="announcement-time">Tomorrow</span></div>
                   <div class="announcement-msg">
-                    Dear students, I hope you are prepared and feeling confident for tomorrow’s test. Please remember to arrive on time and bring all necessary materials. Best of luck to each of you. I believe in your abilities, and know you’ll do your best!
+                    <div class="announcements-section">
+              <h3>Announcements</h3>
+              <% if (!announcements || announcements.length === 0) { %>
+                <p>No announcements at this time.</p>
+              <% } else { %>
+                <ul>
+                  <% announcements.forEach(a => { %>
+                    <li>
+                      <strong><%= a.title %></strong>
+                      <p><%= a.message %></p>
+                      <small><%= new Date(a.created_at).toLocaleDateString() %></small>
+                    </li>
+                  <% }) %>
+          </ul>
+  <% } %>
+</div>
+
                   </div>
                 </div>
               </div>

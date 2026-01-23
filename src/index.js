@@ -117,6 +117,21 @@ app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
 const calendarRoutes = require('./routes/calendar');
 app.use('/calendar', calendarRoutes);
 
+//Announcements
+app.get('/dashboard', requireAuth, loadUserFromDB, async (req, res) => {
+  try {
+    const announcements = await getAnnouncements();
+    res.render('dashboard', {
+      pageTitle: "Dashboard | The Tech Lab",
+      activePage: "dashboard",
+      user: res.locals.user,
+      announcements
+    });
+  } catch (err) {
+    console.error("Error loading dashboard:", err);
+    res.render('dashboard', { pageTitle: "Dashboard | The Tech Lab", activePage: "dashboard", user: res.locals.user, announcements: [] });
+  }
+});
 
 // Learners (mentor view)
 app.get("/learners", requireAuth, loadUserFromDB, async (req, res) => {

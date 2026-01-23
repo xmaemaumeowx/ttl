@@ -86,13 +86,21 @@
             body: JSON.stringify({ credential: response.credential }),
           });
 
+          // Ensure JSON response
+          const contentType = res.headers.get("content-type") || "";
+          if (!contentType.includes("application/json")) {
+            const text = await res.text();
+            throw new Error("Unexpected server response: " + text);
+          }
+
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Login failed");
 
+          // Successful login → redirect
           window.location.href = "/dashboard";
         } catch (err) {
           console.error("Google login error:", err);
-          alert("Error logging in with Google");
+          alert("Error logging in with Google. Check console for details.");
         }
       }
 
@@ -102,6 +110,7 @@
           callback: handleCredentialResponse
         });
 
+        // Render sign-in and sign-up buttons
         google.accounts.id.renderButton(
           document.getElementById("googleSignInDiv"),
           { theme: "outline", size: "large", shape: "pill" }
@@ -111,7 +120,8 @@
           { theme: "outline", size: "large", shape: "pill" }
         );
 
-        google.accounts.id.prompt(); // optional One Tap
+        // Optional One Tap
+        google.accounts.id.prompt();
       };
     } else {
       console.warn("⚠️ GOOGLE_CLIENT_ID not set. Google Sign-In disabled.");

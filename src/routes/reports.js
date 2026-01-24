@@ -16,12 +16,12 @@ function requireMentor(req, res, next) {
 // ---- REPORTS ROUTE ----
 router.get("/", requireAuth, requireMentor, async (req, res) => {
   try {
-    // Learners under this mentor
+    // Get all learners that have projects assigned to this mentor
     const learnersResult = await db.query(
-      `SELECT u.user_id, u.full_name
-       FROM mentor_learner ml
-       JOIN users u ON ml.user_id = u.user_id
-       WHERE ml.mentor_id = $1
+      `SELECT DISTINCT u.user_id, u.full_name
+       FROM projects p
+       JOIN users u ON p.learner_id = u.user_id
+       WHERE p.mentor_id = $1
        ORDER BY u.full_name`,
       [req.user.userId]
     );
@@ -33,7 +33,7 @@ router.get("/", requireAuth, requireMentor, async (req, res) => {
        FROM course_enrollments ce
        JOIN courses c ON ce.course_id = c.course_id
        WHERE ce.user_id IN (
-         SELECT user_id FROM mentor_learner WHERE mentor_id = $1
+         SELECT DISTINCT learner_id FROM projects WHERE mentor_id = $1
        )
        ORDER BY ce.user_id, c.course_name`,
       [req.user.userId]

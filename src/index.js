@@ -170,7 +170,7 @@ app.get("/courses", requireAuth, loadUserFromDB, async (req, res) => {
     `SELECT * FROM courses ORDER BY created_at DESC`
   );
 
-  res.render("projects", {
+  res.render("courses", {
     courses: result.rows || [],
   });
 });

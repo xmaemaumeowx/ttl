@@ -218,7 +218,7 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
     `SELECT * FROM courses ORDER BY created_at DESC`
   );
 
-  res.render("modules", {
+  res.render("courses", {
     courses: result.rows || [],
   });
 });

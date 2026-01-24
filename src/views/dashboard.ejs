@@ -61,7 +61,6 @@
                   <div class="announcement-name">Dianne Russell <span class="announcement-time">Tomorrow</span></div>
                   <div class="announcement-msg">
                     <div class="announcements-section">
-              <h3>Announcements</h3>
               <% if (!announcements || announcements.length === 0) { %>
                 <p>No announcements at this time.</p>
               <% } else { %>
@@ -70,35 +69,13 @@
                     <li>
                       <strong><%= a.title %></strong>
                       <p><%= a.message %></p>
-                      <small><%= new Date(a.created_at).toLocaleDateString() %></small>
+                      <small>Posted on: <%= new Date(a.created_at).toLocaleDateString() %></small>
                     </li>
                   <% }) %>
           </ul>
   <% } %>
 </div>
 
-                  </div>
-                </div>
-              </div>
-              <div class="announcement">
-                <div class="avatar" style="background: #FFD6E0;">EH</div>
-                <div>
-                  <div class="announcement-name">Esther Howard <span class="announcement-time">Monday</span></div>
-                  <div class="announcement-msg">
-                    Monday test is a chance to showcase your knowledge and hard work. Come prepared, stay focused, and give it your best effort. You’ve got this!
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card calendar-card">
-            <div class="calendar-header">Calendar</div>
-            <div class="calendar">
-              <div class="calendar-month">
-                <span><i class="fa fa-angle-left"></i></span>
-                <span>September 2023</span>
-                <span><i class="fa fa-angle-right"></i></span>
-              </div>
               <table>
                 <thead>
                   <tr>

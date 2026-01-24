@@ -1,0 +1,49 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'reports' }) %>
+  <main class="dashboard-main-content">
+    <h1 class="page-title"><%= course.course_name %> - Learner Progress</h1>
+
+    <!-- Toast messages -->
+    <% if (success) { %>
+      <div class="toast success"><%= success %></div>
+    <% } %>
+    <% if (error) { %>
+      <div class="toast error"><%= error %></div>
+    <% } %>
+
+    <% if (!progress || progress.length === 0) { %>
+      <p class="no-data">No learners enrolled in this course.</p>
+    <% } else { %>
+      <% progress.forEach(p => { %>
+        <div class="learner-progress-card">
+          <h3><%= p.learner.full_name %></h3>
+          <% if (!p.modules || p.modules.length === 0) { %>
+            <p>No modules found for this learner.</p>
+          <% } else { %>
+            <ul class="modules-list">
+              <% p.modules.forEach(mod => { %>
+                <li>
+                  <strong><%= mod.module_name %></strong> - Status: <%= mod.module_status || 'Not Started' %>
+                  <% if (mod.lessons && mod.lessons.length > 0) { %>
+                    <ul class="lessons-list">
+                      <% mod.lessons.forEach(lesson => { %>
+                        <li>
+                          <%= lesson.lesson_name %> - <%= lesson.lesson_status || 'Not Started' %>
+                        </li>
+                      <% }) %>
+                    </ul>
+                  <% } %>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </div>
+      <% }) %>
+    <% } %>
+
+    <a href="/reports" class="back-btn">Back to Reports</a>
+  </main>
+</div>
+<%- include('partials/footer') %>

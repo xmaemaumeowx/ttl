@@ -8,6 +8,14 @@
         <div class="project-header">
           <h2>Edit Project</h2>
         </div>
+
+        <!-- Toast Notifications -->
+        <% if (typeof success !== 'undefined' && success) { %>
+          <div id="toast" class="toast"><%= success %></div>
+        <% } else if (typeof error !== 'undefined' && error) { %>
+          <div id="toast" class="toast error"><%= error %></div>
+        <% } %>
+
         <form action="/projects/edit/<%= project.PROJECT_ID %>" method="POST" autocomplete="off">
           <div>
             <label for="name">Project Name</label>

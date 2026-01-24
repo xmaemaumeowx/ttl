@@ -1,0 +1,170 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'reports' }) %>
+  <main class="dashboard-main-content">
+    <h1 class="page-title">Mentor Progress Dashboard</h1>
+
+    <% if ((!courseProgress || courseProgress.length === 0) && (!projects || projects.length === 0)) { %>
+      <p class="no-data">No learners, courses, or projects found.</p>
+    <% } else { %>
+
+      <!-- ===== Filter by Learner ===== -->
+      <section>
+        <label for="learnerFilter"><strong>Filter by Learner:</strong></label>
+        <select id="learnerFilter">
+          <option value="all">All</option>
+          <% courseProgress.forEach(cp => { %>
+            <option value="learner-<%= cp.learner.user_id %>"><%= cp.learner.full_name %></option>
+          <% }) %>
+        </select>
+      </section>
+
+      <!-- ===== Courses Progress ===== -->
+      <section id="coursesSection">
+        <h2>Course Progress</h2>
+        <% courseProgress.forEach(cp => { %>
+          <div class="learner-card learner-<%= cp.learner.user_id %>">
+            <h3><%= cp.learner.full_name %></h3>
+            <% if (!cp.courses || cp.courses.length === 0) { %>
+              <p>No courses assigned.</p>
+            <% } else { %>
+              <% cp.courses.forEach(course => { %>
+                <div class="course-card">
+                  <strong><%= course.course_name %></strong>
+                  <% course.modules.forEach(mod => { %>
+                    <div class="module">
+                      <button class="toggle-btn">▶ <%= mod.module_name %> - <%= mod.module_status || 'Not Started' %></button>
+                      <ul class="lesson-list" style="display:none;">
+                        <% mod.lessons.forEach(lesson => { %>
+                          <li>
+                            <%= lesson.lesson_name %> - <%= lesson.lesson_status || 'Not Started' %>
+                          </li>
+                        <% }) %>
+                      </ul>
+                    </div>
+                  <% }) %>
+                </div>
+              <% }) %>
+            <% } %>
+          </div>
+        <% }) %>
+      </section>
+
+      <!-- ===== Projects Progress ===== -->
+      <section id="projectsSection">
+        <h2>Projects</h2>
+        <% projects.forEach(p => { %>
+          <div class="learner-card learner-<%= p.learner.user_id %>">
+            <h3><%= p.learner.full_name %></h3>
+            <% if (!p.projects || p.projects.length === 0) { %>
+              <p>No projects assigned.</p>
+            <% } else { %>
+              <ul>
+                <% p.projects.forEach(proj => { %>
+                  <li>
+                    <strong><%= proj.name %></strong> - 
+                    <select class="project-status-dropdown" data-project-id="<%= proj.project_id %>">
+                      <option value="Planned" <%= proj.status==='Planned'?'selected':'' %>>Planned</option>
+                      <option value="Ongoing" <%= proj.status==='Ongoing'?'selected':'' %>>Ongoing</option>
+                      <option value="Completed" <%= proj.status==='Completed'?'selected':'' %>>Completed</option>
+                    </select>
+                    <% if (proj.github_link) { %> | <a href="<%= proj.github_link %>" target="_blank">GitHub</a> <% } %>
+                    <% if (proj.live_link) { %> | <a href="<%= proj.live_link %>" target="_blank">Live</a> <% } %>
+                  </li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </div>
+        <% }) %>
+      </section>
+
+    <% } %>
+  </main>
+</div>
+
+<%- include('partials/footer') %>
+
+<script>
+  // Toggle lessons on module click
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ul = btn.nextElementSibling;
+      ul.style.display = ul.style.display === 'none' ? 'block' : 'none';
+      btn.textContent = ul.style.display === 'block' ? '▼ ' + btn.textContent.slice(2) : '▶ ' + btn.textContent.slice(2);
+    });
+  });
+
+  // Filter by learner
+  const learnerFilter = document.getElementById('learnerFilter');
+  learnerFilter.addEventListener('change', () => {
+    const value = learnerFilter.value;
+    document.querySelectorAll('.learner-card').forEach(card => {
+      card.style.display = (value === 'all' || card.classList.contains(value)) ? 'block' : 'none';
+    });
+  });
+
+  // AJAX project status update
+  document.querySelectorAll('.project-status-dropdown').forEach(dropdown => {
+    dropdown.addEventListener('change', async (e) => {
+      const projectId = e.target.dataset.projectId;
+      const status = e.target.value;
+      try {
+        const res = await fetch(`/projects/update-status/${projectId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if(data.success){
+          showToast(`Project status updated to ${data.status}`, 'success');
+        } else {
+          showToast(data.error || 'Update failed', 'error');
+        }
+      } catch(err){
+        console.error(err);
+        showToast('Server error', 'error');
+      }
+    });
+  });
+
+  // Toast function
+  function showToast(msg, type='success'){
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(()=> toast.remove(), 4000);
+  }
+</script>
+
+<style>
+  .toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .lesson-list {
+    margin-left: 20px;
+  }
+  .project-status-dropdown {
+    margin-left: 5px;
+    padding: 2px 5px;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4caf50;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 1000;
+  }
+  .toast.error {
+    background: #f44336;
+  }
+</style>

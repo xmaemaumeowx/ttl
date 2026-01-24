@@ -316,3 +316,7 @@ app.get("/logout", (req, res) => {
 
 // ---- START SERVER ----
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+// -- REPORTS ---
+const reportsRoutes = require('./routes/reports');
+app.use('/reports', reportsRoutes);

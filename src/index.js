@@ -136,33 +136,20 @@ app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
 /* ===============================
    PROJECTS
 ================================ */
+/* ===============================
+   DASHBOARD
+================================ */
 app.get("/projects", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.pageTitle = "Projects | The Tech Lab";
   res.locals.activePage = "projects";
 
-  let projects = [];
+  const result = await db.query(
+    `SELECT * FROM projects ORDER BY created_at DESC LIMIT 5`
+  );
 
-  if (res.locals.user.role === "mentor") {
-    const result = await db.query(
-      `SELECT p.*, u.full_name AS learner_name
-       FROM projects p
-       LEFT JOIN users u ON p.learner_id = u.user_id
-       WHERE p.mentor_id = $1
-       ORDER BY p.created_at DESC`,
-      [res.locals.user.userId]
-    );
-    projects = result.rows;
-  } else {
-    const result = await db.query(
-      `SELECT * FROM projects
-       WHERE learner_id = $1
-       ORDER BY created_at DESC`,
-      [res.locals.user.userId]
-    );
-    projects = result.rows;
-  }
-
-  res.render("projects", { projects });
+  res.render("projects", {
+    projects: result.rows || [],
+  });
 });
 
 /* ===============================

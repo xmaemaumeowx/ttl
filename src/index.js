@@ -185,24 +185,6 @@ app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
 });
 
 /* ===============================
-   LEARNERS (MENTOR)
-================================ */
-app.get("/learners", requireAuth, requireMentor, loadUserFromDB, async (req, res) => {
-  res.locals.pageTitle = "My Learners | The Tech Lab";
-  res.locals.activePage = "learners";
-
-  const result = await db.query(
-    `SELECT u.user_id, u.full_name, u.email
-     FROM mentor_learner ml
-     JOIN users u ON ml.user_id = u.user_id
-     WHERE ml.mentor_id = $1`,
-    [req.user.userId]
-  );
-
-  res.render("learners", { learners: result.rows });
-});
-
-/* ===============================
   REPORTS
 ================================ */
 
@@ -218,9 +200,28 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
     `SELECT * FROM courses ORDER BY created_at DESC`
   );
 
-  res.render("courses", {
-    courses: result.rows || [],
+  res.render("reports", {
+    reports: result.rows || [],
   });
+});
+
+
+/* ===============================
+   LEARNERS (MENTOR)
+================================ */
+app.get("/learners", requireAuth, requireMentor, loadUserFromDB, async (req, res) => {
+  res.locals.pageTitle = "My Learners | The Tech Lab";
+  res.locals.activePage = "learners";
+
+  const result = await db.query(
+    `SELECT u.user_id, u.full_name, u.email
+     FROM mentor_learner ml
+     JOIN users u ON ml.user_id = u.user_id
+     WHERE ml.mentor_id = $1`,
+    [req.user.userId]
+  );
+
+  res.render("learners", { learners: result.rows });
 });
 
 

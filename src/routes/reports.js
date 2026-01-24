@@ -1,61 +1,65 @@
-const express = require("express");
-const router = express.Router();
-const db = require("../db/postgres");
-
-// ---- MIDDLEWARE ----
-function requireAuth(req, res, next) {
-  if (!req.user) return res.redirect("/login");
-  next();
-}
-
-function requireMentor(req, res, next) {
-  if (req.user.role !== "mentor") return res.redirect("/dashboard");
-  next();
-}
-
-// ---- REPORTS ROUTE ----
 router.get("/", requireAuth, requireMentor, async (req, res) => {
   try {
-    // Get all learners that have projects assigned to this mentor
+    // 1️⃣ Get learners under this mentor's tracks
     const learnersResult = await db.query(
       `SELECT DISTINCT u.user_id, u.full_name
-       FROM projects p
-       JOIN users u ON p.learner_id = u.user_id
-       WHERE p.mentor_id = $1
+       FROM users u
+       JOIN enrollments e ON u.user_id = e.user_id
+       JOIN courses c ON e.course_id = c.course_id
+       JOIN learning_tracks lt ON c.track_id = lt.track_id
+       WHERE lt.mentor_id = $1
        ORDER BY u.full_name`,
       [req.user.userId]
     );
     const learners = learnersResult.rows;
 
-    // Course progress for mentor's learners
-    const coursesResult = await db.query(
-      `SELECT ce.user_id, c.course_name, ce.progress
-       FROM course_enrollments ce
-       JOIN courses c ON ce.course_id = c.course_id
-       WHERE ce.user_id IN (
-         SELECT DISTINCT learner_id FROM projects WHERE mentor_id = $1
-       )
-       ORDER BY ce.user_id, c.course_name`,
+    // 2️⃣ Get course enrollments
+    const enrollmentsResult = await db.query(
+      `SELECT e.enrollment_id, e.user_id, e.course_id, c.course_name
+       FROM enrollments e
+       JOIN courses c ON e.course_id = c.course_id
+       JOIN learning_tracks lt ON c.track_id = lt.track_id
+       WHERE lt.mentor_id = $1
+       ORDER BY c.order_no`,
       [req.user.userId]
     );
-    const courses = coursesResult.rows;
+    const enrollments = enrollmentsResult.rows;
 
-    // Projects assigned to mentor's learners
-    const projectsResult = await db.query(
-      `SELECT p.*, u.full_name AS learner_name
-       FROM projects p
-       JOIN users u ON p.learner_id = u.user_id
-       WHERE p.mentor_id = $1
-       ORDER BY p.created_at DESC`,
-      [req.user.userId]
-    );
-    const projects = projectsResult.rows;
+    // 3️⃣ Get lesson progress
+    const enrollmentIds = enrollments.map(e => e.enrollment_id);
+    let lessonProgress = [];
+    if (enrollmentIds.length) {
+      const lessonResult = await db.query(
+        `SELECT lp.enrollment_id, lp.lesson_id, lp.completed, lp.completed_at, l.lesson_name
+         FROM lesson_progress lp
+         JOIN lessons l ON lp.lesson_id = l.lesson_id
+         WHERE lp.enrollment_id = ANY($1::bigint[])`,
+        [enrollmentIds]
+      );
+      lessonProgress = lessonResult.rows;
+    }
+
+    // 4️⃣ Get projects for these learners
+    const learnerIds = learners.map(l => l.user_id);
+    let projects = [];
+    if (learnerIds.length) {
+      const projectsResult = await db.query(
+        `SELECT p.*, u.full_name AS learner_name
+         FROM projects p
+         JOIN users u ON p.learner_id = u.user_id
+         WHERE p.learner_id = ANY($1::bigint[])
+         ORDER BY p.created_at DESC`,
+        [learnerIds]
+      );
+      projects = projectsResult.rows;
+    }
 
     res.render("mentor-progress", {
       pageTitle: "Reports | The Tech Lab",
       activePage: "reports",
       learners,
-      courses,
+      enrollments,
+      lessonProgress,
       projects,
       success: req.query.success || "",
       error: req.query.error || "",
@@ -66,12 +70,11 @@ router.get("/", requireAuth, requireMentor, async (req, res) => {
       pageTitle: "Reports | The Tech Lab",
       activePage: "reports",
       learners: [],
-      courses: [],
+      enrollments: [],
+      lessonProgress: [],
       projects: [],
       success: "",
-      error: "Failed to load reports. Please try again later.",
+      error: "Failed to load report data.",
     });
   }
 });
-
-module.exports = router;

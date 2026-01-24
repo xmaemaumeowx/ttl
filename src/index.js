@@ -155,6 +155,27 @@ app.get("/projects", requireAuth, loadUserFromDB, async (req, res) => {
 });
 
 /* ===============================
+   COURSES
+================================ */
+
+app.get("/courses", requireAuth, loadUserFromDB, async (req, res) => {
+  res.locals.pageTitle = "Courses | The Tech Lab";
+  res.locals.activePage = "courses";
+
+  // ✅ define toast defaults
+  res.locals.success = null;
+  res.locals.error = null;
+
+  const result = await db.query(
+    `SELECT * FROM courses ORDER BY created_at DESC`
+  );
+
+  res.render("projects", {
+    courses: result.rows || [],
+  });
+});
+
+/* ===============================
    CALENDAR
 ================================ */
 app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {

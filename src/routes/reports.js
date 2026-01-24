@@ -1,3 +1,5 @@
+const express = require('express');
+const router = express.Router();
 // View learner progress for a course (mentor only)
 router.get('/course/:courseId', requireAuth, requireMentor, async (req, res) => {
   const courseId = req.params.courseId;

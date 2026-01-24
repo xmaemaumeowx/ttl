@@ -203,13 +203,26 @@ app.get("/learners", requireAuth, requireMentor, loadUserFromDB, async (req, res
 });
 
 /* ===============================
-   REPORTS (MENTOR ONLY)
+  REPORTS
 ================================ */
-app.get("/reports", requireAuth, requireMentor, loadUserFromDB, (req, res) => {
+
+app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.pageTitle = "Reports | The Tech Lab";
   res.locals.activePage = "reports";
-  res.render("reports");
+
+  // ✅ define toast defaults
+  res.locals.success = null;
+  res.locals.error = null;
+
+  const result = await db.query(
+    `SELECT * FROM modules ORDER BY created_at DESC`
+  );
+
+  res.render("modules", {
+    modules: result.rows || [],
+  });
 });
+
 
 /* ===============================
    SETTINGS

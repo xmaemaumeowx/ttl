@@ -15,9 +15,10 @@ router.get("/", requireAuth, requireMentor, async (req, res) => {
 
     // 2️⃣ Get course enrollments
     const enrollmentsResult = await db.query(
-      `SELECT e.enrollment_id, e.user_id, e.course_id, c.course_name
+      `SELECT e.enrollment_id, e.user_id, u.full_name, lt.track_name, c.course_name
        FROM enrollments e
-       JOIN courses c ON e.course_id = c.course_id
+       JOIN users u ON e.user_id = u.user_id
+       JOIN courses c ON e.track_id = c.track_id
        JOIN learning_tracks lt ON c.track_id = lt.track_id
        WHERE lt.mentor_id = $1
        ORDER BY c.order_no`,
@@ -30,7 +31,7 @@ router.get("/", requireAuth, requireMentor, async (req, res) => {
     let lessonProgress = [];
     if (enrollmentIds.length) {
       const lessonResult = await db.query(
-        `SELECT lp.enrollment_id, lp.lesson_id, lp.completed, lp.completed_at, l.lesson_name
+        `SELECT lp.enrollment_id, lp.lesson_id, lp.completed, l.lesson_title, lp.completed_at
          FROM lesson_progress lp
          JOIN lessons l ON lp.lesson_id = l.lesson_id
          WHERE lp.enrollment_id = ANY($1::bigint[])`,

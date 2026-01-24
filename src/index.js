@@ -215,11 +215,11 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.error = null;
 
   const result = await db.query(
-    `SELECT * FROM modules ORDER BY created_at DESC`
+    `SELECT * FROM courses ORDER BY created_at DESC`
   );
 
   res.render("modules", {
-    modules: result.rows || [],
+    courses: result.rows || [],
   });
 });
 

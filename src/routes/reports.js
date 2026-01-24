@@ -55,7 +55,7 @@ router.get("/", requireAuth, requireMentor, async (req, res) => {
       projects = projectsResult.rows;
     }
 
-    res.render("mentor-progress", {
+    res.render("reports", {
       pageTitle: "Reports | The Tech Lab",
       activePage: "reports",
       learners,

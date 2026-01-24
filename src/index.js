@@ -136,15 +136,17 @@ app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
 /* ===============================
    PROJECTS
 ================================ */
-/* ===============================
-   DASHBOARD
-================================ */
+
 app.get("/projects", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.pageTitle = "Projects | The Tech Lab";
   res.locals.activePage = "projects";
 
+  // ✅ define toast defaults
+  res.locals.success = null;
+  res.locals.error = null;
+
   const result = await db.query(
-    `SELECT * FROM projects ORDER BY created_at DESC LIMIT 5`
+    `SELECT * FROM projects ORDER BY created_at DESC`
   );
 
   res.render("projects", {

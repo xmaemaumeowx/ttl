@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const requireAuth = require('../middleware/auth');
-
 const mentorSlotModel = require('../models/mentorSlotModel');
 const bookingModel = require('../models/bookingModel');
 
@@ -19,18 +18,7 @@ router.post('/slots', requireAuth, async (req, res) => {
   }
 });
 
-// Get all slots (student & mentor view)
-router.get('/slots', requireAuth, async (req, res) => {
-  try {
-    const slots = await mentorSlotModel.getAllSlots();
-    res.json(slots);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
-  }
-});
-
-// Book a slot
+// Student books a slot
 router.post('/slots/:id/book', requireAuth, async (req, res) => {
   try {
     const slot_id = req.params.id;

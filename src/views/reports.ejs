@@ -1,5 +1,7 @@
-<%- include("partials/header") %>
-
+<%- include('partials/header', { pageTitle: "My Reports | The Tech Lab" }) %>
+<%- include('partials/navbar') %>
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'reports', user: user }) %>
 <div class="container mt-4">
   <h2 class="mb-3">📊 My Learning Progress</h2>
 
@@ -48,6 +50,7 @@
       <% }) %>
     </tbody>
   </table>
+</div>
 </div>
 
 <%- include("partials/footer") %>

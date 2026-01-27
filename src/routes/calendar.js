@@ -1,4 +1,6 @@
 // src/routes/calendar.js
+console.log('Using router:', require.resolve('express'));
+
 const express = require('express');
 const router = express.Router();
 

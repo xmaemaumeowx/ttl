@@ -1,117 +1,85 @@
+// src/routes/auth.js
 const express = require("express");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const db = require("../db/postgres");
-const { OAuth2Client } = require("google-auth-library");
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+/* ------------------------------
+   LOGIN / SIGNUP
+------------------------------ */
 
-/* ===============================
-   EMAIL/PASSWORD LOGIN
-================================ */
+// Email/Password login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  const result = await db.query(`SELECT * FROM users WHERE email=$1`, [email]);
+  const user = result.rows[0];
+  if (!user) return res.redirect("/login?error=Invalid credentials");
 
-  if (!email || !password)
-    return res.redirect("/login?error=Email and password required");
+  const valid = await bcrypt.compare(password, user.password_hash);
+  if (!valid) return res.redirect("/login?error=Invalid credentials");
 
-  try {
-    const result = await db.query(`SELECT * FROM users WHERE email=$1`, [email]);
-    if (result.rows.length === 0)
-      return res.redirect("/login?error=Invalid credentials");
-
-    const user = result.rows[0];
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return res.redirect("/login?error=Invalid credentials");
-
-    const token = jwt.sign(
-      { userId: user.user_id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.cookie("token", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.redirect("/dashboard");
-  } catch (err) {
-    console.error("Login error:", err);
-    res.redirect("/login?error=Server error");
-  }
+  const token = jwt.sign({ userId: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  res.cookie("token", token, { httpOnly: true, maxAge: 604800000 }); // 7 days
+  res.redirect("/dashboard");
 });
 
-/* ===============================
-   GOOGLE LOGIN
-================================ */
+// Google Login / SignUp
 router.post("/auth/google", async (req, res) => {
-  const { credential } = req.body;
-  if (!credential) return res.status(400).json({ error: "Missing credential" });
+  const credential = req.body?.credential;
+  if (!credential) return res.status(400).json({ error: "Missing Google credential" });
 
+  // Verify token with Google API
+  const { OAuth2Client } = require("google-auth-library");
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  let payload;
   try {
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const email = payload.email;
-    const fullName = payload.name;
-
-    // Check if user exists
-    let result = await db.query(`SELECT * FROM users WHERE email=$1`, [email]);
-    let user;
-    if (result.rows.length === 0) {
-      const insert = await db.query(
-        `INSERT INTO users (full_name, email) VALUES ($1, $2) RETURNING *`,
-        [fullName, email]
-      );
-      user = insert.rows[0];
-    } else {
-      user = result.rows[0];
-    }
-
-    // JWT
-    const token = jwt.sign(
-      { userId: user.user_id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.cookie("token", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.json({ success: true });
+    const ticket = await client.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
+    payload = ticket.getPayload();
   } catch (err) {
-    console.error("Google login error:", err);
-    res.status(500).json({ error: "Google login failed" });
+    console.error("Google token verification failed", err);
+    return res.status(401).json({ error: "Invalid Google token" });
   }
+
+  // Check if user exists
+  let userResult = await db.query(`SELECT * FROM users WHERE email=$1`, [payload.email]);
+  let user = userResult.rows[0];
+
+  if (!user) {
+    // Create new user
+    const passwordHash = await bcrypt.hash(Math.random().toString(36), 10);
+    const insert = await db.query(
+      `INSERT INTO users (full_name, email, password_hash, role, avatar) VALUES ($1,$2,$3,'learner',$4) RETURNING *`,
+      [payload.name, payload.email, passwordHash, payload.picture]
+    );
+    user = insert.rows[0];
+  }
+
+  // Generate JWT
+  const token = jwt.sign({ userId: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  res.cookie("token", token, { httpOnly: true, maxAge: 604800000 }); // 7 days
+  res.json({ success: true });
 });
 
-/* ===============================
-   EMAIL/PASSWORD SIGNUP
-================================ */
-router.post("/signup", async (req, res) => {
-  const { full_name, email, password } = req.body;
-  if (!full_name || !email || !password)
-    return res.redirect("/login?error=All fields required");
-
+/* ------------------------------
+   MIDDLEWARE EXPORTS
+------------------------------ */
+function requireAuth(req, res, next) {
+  const token = req.cookies?.token;
+  if (!token) return res.redirect("/login");
   try {
-    const hashed = await bcrypt.hash(password, 10);
-    const result = await db.query(
-      `INSERT INTO users (full_name, email, password_hash) VALUES ($1, $2, $3) RETURNING *`,
-      [full_name, email, hashed]
-    );
-
-    const user = result.rows[0];
-    const token = jwt.sign(
-      { userId: user.user_id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.cookie("token", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.redirect("/dashboard");
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.redirect("/login?error=Server error");
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    res.redirect("/login");
   }
-});
+}
+
+function requireMentor(req, res, next) {
+  if (!req.user || req.user.role !== "mentor") return res.status(403).send("Access denied. Mentors only.");
+  next();
+}
 
 module.exports = router;
+module.exports.requireAuth = requireAuth;
+module.exports.requireMentor = requireMentor;

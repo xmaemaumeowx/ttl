@@ -7,7 +7,7 @@ const db = require('../db/postgres');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-router.post('/auth/google', async (req, res) => {
+router.post('/google', async (req, res) => {
   const { credential } = req.body;
   if (!credential) return res.status(400).send('Missing credential');
 

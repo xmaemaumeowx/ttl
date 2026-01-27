@@ -2,55 +2,94 @@
 <%- include('partials/navbar') %>
 <div class="dashboard">
   <%- include('partials/sidebar', { activePage: 'reports', user: user }) %>
-<div class="container mt-4">
-  <h2 class="mb-3">📊 My Learning Progress</h2>
+<main class="main-content">
+    <div class="container-fluid py-4">
 
-  <% if (success) { %>
-    <div class="alert alert-success"><%= success %></div>
-  <% } %>
+      <!-- Page Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">📊 My Learning Reports</h2>
+      </div>
 
-  <% if (error) { %>
-    <div class="alert alert-danger"><%= error %></div>
-  <% } %>
-
-  <table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark">
-      <tr>
-        <th>Course</th>
-        <th>Progress (%)</th>
-        <th>Milestones Reached</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (reports.length === 0) { %>
-        <tr>
-          <td colspan="4" class="text-center text-muted">
-            No course progress available yet.
-          </td>
-        </tr>
+      <!-- Toast / Alerts -->
+      <% if (success && success.length > 0) { %>
+        <div class="alert alert-success"><%= success %></div>
       <% } %>
 
-      <% reports.forEach(r => { %>
-        <tr>
-          <td><%= r.course_name %></td>
-          <td>
-            <strong><%= r.progress %>%</strong>
-          </td>
-          <td><%= r.milestones %></td>
-          <td>
-            <span class="badge 
-              <%= r.status === 'Completed' ? 'bg-success' :
-                  r.status === 'On Track' ? 'bg-primary' :
-                  'bg-warning text-dark' %>">
-              <%= r.status %>
-            </span>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-</div>
-</div>
+      <% if (error && error.length > 0) { %>
+        <div class="alert alert-danger"><%= error %></div>
+      <% } %>
+
+      <!-- Reports Table -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+
+          <% if (!reports || reports.length === 0) { %>
+            <div class="text-center py-5 text-muted">
+              <h5>No learning activity yet</h5>
+              <p>Once you start working on projects, your progress will appear here.</p>
+            </div>
+          <% } else { %>
+
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Learning Track</th>
+                    <th>Progress</th>
+                    <th>Milestones Reached</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                  <% reports.forEach(r => { %>
+                    <tr>
+                      <td>
+                        <strong><%= r.track_name %></strong>
+                      </td>
+
+                      <td style="width: 30%;">
+                        <div class="progress" style="height: 22px;">
+                          <div 
+                            class="progress-bar 
+                              <%= r.progress === 100 ? 'bg-success' :
+                                  r.progress >= 50 ? 'bg-primary' :
+                                  'bg-secondary' %>"
+                            role="progressbar"
+                            style="width: <%= r.progress %>%"
+                            aria-valuenow="<%= r.progress %>"
+                            aria-valuemin="0"
+                            aria-valuemax="100">
+                            <%= r.progress %>%
+                          </div>
+                        </div>
+                      </td>
+
+                      <td>
+                        <%= r.milestones %>
+                      </td>
+
+                      <td>
+                        <span class="badge 
+                          <%= r.status === 'Completed' ? 'bg-success' :
+                              r.status === 'In Progress' ? 'bg-primary' :
+                              'bg-secondary' %>">
+                          <%= r.status %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% }) %>
+
+                </tbody>
+              </table>
+            </div>
+
+          <% } %>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
 
 <%- include("partials/footer") %>

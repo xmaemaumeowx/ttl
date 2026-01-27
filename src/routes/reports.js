@@ -2,13 +2,11 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db/postgres");
 
-// Auth middleware
 function requireAuth(req, res, next) {
   if (!req.user) return res.redirect("/login");
   next();
 }
 
-// Learner-only access
 function requireLearner(req, res, next) {
   if (req.user.role !== "learner") return res.redirect("/dashboard");
   next();
@@ -19,38 +17,41 @@ router.get("/", requireAuth, requireLearner, async (req, res) => {
     const result = await db.query(
       `
       SELECT 
-        c.course_name,
-        ce.progress
-      FROM course_enrollments ce
-      JOIN courses c ON ce.course_id = c.course_id
-      WHERE ce.user_id = $1
-      ORDER BY c.course_name
+        lt.track_name,
+        COUNT(p.project_id) AS total_projects,
+        COUNT(CASE WHEN p.status = 'Completed' THEN 1 END) AS completed_projects
+      FROM learning_tracks lt
+      LEFT JOIN projects p 
+        ON p.track_id = lt.track_id 
+        AND p.learner_id = $1
+      GROUP BY lt.track_name
+      ORDER BY lt.track_name
       `,
       [req.user.userId]
     );
 
-    // Compute milestones server-side
     const reports = result.rows.map(row => {
+      const total = Number(row.total_projects);
+      const completed = Number(row.completed_projects);
+      const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
+
       let milestones = "Not started";
       let status = "Pending";
 
-      if (row.progress >= 100) {
+      if (progress === 100) {
         milestones = "All milestones completed";
         status = "Completed";
-      } else if (row.progress >= 75) {
-        milestones = "Major milestones reached";
-        status = "On Track";
-      } else if (row.progress >= 50) {
-        milestones = "Mid-course milestone reached";
+      } else if (progress >= 50) {
+        milestones = "Mid-track milestone reached";
         status = "In Progress";
-      } else if (row.progress > 0) {
+      } else if (progress > 0) {
         milestones = "Initial milestone reached";
         status = "In Progress";
       }
 
       return {
-        course_name: row.course_name,
-        progress: row.progress,
+        track_name: row.track_name,
+        progress,
         milestones,
         status
       };
@@ -60,8 +61,8 @@ router.get("/", requireAuth, requireLearner, async (req, res) => {
       pageTitle: "My Learning Reports | The Tech Lab",
       activePage: "reports",
       reports,
-      success: req.query.success || "",
-      error: req.query.error || ""
+      success: "",
+      error: ""
     });
 
   } catch (err) {
@@ -71,7 +72,7 @@ router.get("/", requireAuth, requireLearner, async (req, res) => {
       activePage: "reports",
       reports: [],
       success: "",
-      error: "Unable to load learning reports"
+      error: "Unable to generate learning report"
     });
   }
 });

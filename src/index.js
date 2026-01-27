@@ -186,7 +186,9 @@ app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
 
 const calendarRoutes = require('./routes/calendar');
 app.use('/calendar', calendarRoutes);
-
+app.listen(process.env.PORT || 3000, () => {
+  console.log('Server running');
+});
 
 /* ===============================
   REPORTS

@@ -1,44 +1,53 @@
-<%- include('partials/header') %>
-<%- include('partials/navbar', { activePage: 'reports' }); %>
-<div class="dashboard">
-  <%- include('partials/sidebar', { activePage: 'reports' }) %>
-  <main class="dashboard-main-content">
-    <h1 class="page-title">Reports</h1>
+<%- include("partials/header") %>
 
-    <!-- Toast messages -->
-    <% if (success) { %>
-      <div class="toast success"><%= success %></div>
-    <% } %>
-    <% if (error) { %>
-      <div class="toast error"><%= error %></div>
-    <% } %>
+<div class="container mt-4">
+  <h2 class="mb-3">📊 My Learning Progress</h2>
 
-    <% if (!courses || courses.length === 0) { %>
-      <p class="no-data">No courses or learners found.</p>
-    <% } else { %>
-      <table class="reports-table">
-        <thead>
-          <tr>
-            <th>Course Name</th>
-            <th>Description</th>
-            <th># of Learners</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% courses.forEach(course => { %>
-            <tr>
-              <td><%= course.course_name %></td>
-              <td><%= course.description %></td>
-              <td><%= course.learner_count %></td>
-              <td>
-                <a href="/reports/course/<%= course.course_id %>" class="view-btn">View Progress</a>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    <% } %>
-  </main>
+  <% if (success) { %>
+    <div class="alert alert-success"><%= success %></div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+  <% } %>
+
+  <table class="table table-bordered table-hover align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Course</th>
+        <th>Progress (%)</th>
+        <th>Milestones Reached</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (reports.length === 0) { %>
+        <tr>
+          <td colspan="4" class="text-center text-muted">
+            No course progress available yet.
+          </td>
+        </tr>
+      <% } %>
+
+      <% reports.forEach(r => { %>
+        <tr>
+          <td><%= r.course_name %></td>
+          <td>
+            <strong><%= r.progress %>%</strong>
+          </td>
+          <td><%= r.milestones %></td>
+          <td>
+            <span class="badge 
+              <%= r.status === 'Completed' ? 'bg-success' :
+                  r.status === 'On Track' ? 'bg-primary' :
+                  'bg-warning text-dark' %>">
+              <%= r.status %>
+            </span>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
 </div>
-<%- include('partials/footer') %>
+
+<%- include("partials/footer") %>

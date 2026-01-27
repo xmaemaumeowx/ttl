@@ -1,95 +1,100 @@
-<%- include('partials/header', { pageTitle: "My Reports | The Tech Lab" }) %>
-<%- include('partials/navbar') %>
+<%- include("partials/header") %>
+<%- include("partials/navbar") %>
+
 <div class="dashboard">
-  <%- include('partials/sidebar', { activePage: 'reports', user: user }) %>
-<main class="main-content">
-    <div class="container-fluid py-4">
+  <%- include("partials/sidebar", { activePage: "reports" }) %>
 
-      <!-- Page Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">📊 My Learning Reports</h2>
-      </div>
+  <div class="dashboard-content">
 
-      <!-- Toast / Alerts -->
-      <% if (success && success.length > 0) { %>
-        <div class="alert alert-success"><%= success %></div>
-      <% } %>
-
-      <% if (error && error.length > 0) { %>
-        <div class="alert alert-danger"><%= error %></div>
-      <% } %>
-
-      <!-- Reports Table -->
-      <div class="card shadow-sm">
-        <div class="card-body">
-
-          <% if (!reports || reports.length === 0) { %>
-            <div class="text-center py-5 text-muted">
-              <h5>No learning activity yet</h5>
-              <p>Once you start working on projects, your progress will appear here.</p>
-            </div>
-          <% } else { %>
-
-            <div class="table-responsive">
-              <table class="table table-bordered align-middle">
-                <thead class="table-dark">
-                  <tr>
-                    <th>Learning Track</th>
-                    <th>Progress</th>
-                    <th>Milestones Reached</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-
-                  <% reports.forEach(r => { %>
-                    <tr>
-                      <td>
-                        <strong><%= r.track_name %></strong>
-                      </td>
-
-                      <td style="width: 30%;">
-                        <div class="progress" style="height: 22px;">
-                          <div 
-                            class="progress-bar 
-                              <%= r.progress === 100 ? 'bg-success' :
-                                  r.progress >= 50 ? 'bg-primary' :
-                                  'bg-secondary' %>"
-                            role="progressbar"
-                            style="width: <%= r.progress %>%"
-                            aria-valuenow="<%= r.progress %>"
-                            aria-valuemin="0"
-                            aria-valuemax="100">
-                            <%= r.progress %>%
-                          </div>
-                        </div>
-                      </td>
-
-                      <td>
-                        <%= r.milestones %>
-                      </td>
-
-                      <td>
-                        <span class="badge 
-                          <%= r.status === 'Completed' ? 'bg-success' :
-                              r.status === 'In Progress' ? 'bg-primary' :
-                              'bg-secondary' %>">
-                          <%= r.status %>
-                        </span>
-                      </td>
-                    </tr>
-                  <% }) %>
-
-                </tbody>
-              </table>
-            </div>
-
-          <% } %>
-
-        </div>
-      </div>
-
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>📊 Learning Reports</h1>
+      <p class="text-muted">Your course progress and milestones overview</p>
     </div>
-  </main>
+
+    <!-- Alerts -->
+    <% if (success && success.length > 0) { %>
+      <div class="alert alert-success"><%= success %></div>
+    <% } %>
+
+    <% if (error && error.length > 0) { %>
+      <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <!-- Reports Card -->
+    <div class="card ttl-card">
+      <div class="card-header">
+        <h3>Progress Summary</h3>
+      </div>
+
+      <div class="card-body">
+
+        <% if (!reports || reports.length === 0) { %>
+          <div class="empty-state">
+            <i class="fas fa-chart-line"></i>
+            <h4>No progress data yet</h4>
+            <p>Once you start working on projects, your learning progress will appear here.</p>
+          </div>
+        <% } else { %>
+
+          <div class="table-responsive">
+            <table class="table ttl-table">
+              <thead>
+                <tr>
+                  <th>Learning Track</th>
+                  <th>Progress</th>
+                  <th>Milestones Reached</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                <% reports.forEach(r => { %>
+                  <tr>
+                    <td>
+                      <strong><%= r.track_name %></strong>
+                    </td>
+
+                    <td style="min-width: 220px;">
+                      <div class="progress ttl-progress">
+                        <div
+                          class="progress-bar
+                            <%= r.progress === 100 ? 'bg-success' :
+                                r.progress >= 50 ? 'bg-primary' :
+                                'bg-secondary' %>"
+                          style="width: <%= r.progress %>%">
+                          <%= r.progress %>%
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span class="badge ttl-badge">
+                        <%= r.milestones %>
+                      </span>
+                    </td>
+
+                    <td>
+                      <span class="status-pill
+                        <%= r.status === 'Completed' ? 'status-complete' :
+                            r.status === 'In Progress' ? 'status-active' :
+                            'status-planned' %>">
+                        <%= r.status %>
+                      </span>
+                    </td>
+                  </tr>
+                <% }) %>
+
+              </tbody>
+            </table>
+          </div>
+
+        <% } %>
+
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <%- include("partials/footer") %>

@@ -1,57 +1,26 @@
-// src/routes/auth.js
-const express = require("express");
-const router = express.Router();
-const { OAuth2Client } = require("google-auth-library");
+// src/middleware/auth.js
 const jwt = require("jsonwebtoken");
-const db = require("../db/postgres");
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-router.post("/auth/google", async (req, res) => {
-  const { credential } = req.body;
-  if (!credential) return res.status(400).send("Missing credential");
+function requireAuth(req, res, next) {
+  const token = req.cookies?.token;
+  if (!token) return res.redirect("/login");
 
   try {
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const email = payload.email;
-    const fullName = payload.name;
-
-    // Check if user exists
-    let result = await db.query(`SELECT * FROM users WHERE email=$1`, [email]);
-    let user;
-
-    if (result.rows.length === 0) {
-      // Create user if not exists
-      const insert = await db.query(
-        `INSERT INTO users (full_name, email) VALUES ($1, $2) RETURNING *`,
-        [fullName, email]
-      );
-      user = insert.rows[0];
-    } else {
-      user = result.rows[0];
-    }
-
-    // Create JWT
-    const token = jwt.sign(
-      { userId: user.user_id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // Send cookie
-    res.cookie("token", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-
-    // Respond success
-    res.json({ success: true });
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
   } catch (err) {
-    console.error("Google login error:", err);
-    res.status(500).send("Google login failed");
+    console.error("JWT error:", err);
+    return res.redirect("/login");
   }
-});
+}
 
-module.exports = router;
+function requireMentor(req, res, next) {
+  if (!req.user) return res.redirect("/login");
+  if (req.user.role !== "mentor") {
+    console.warn(`Unauthorized access attempt by user ${req.user.userId}`);
+    return res.status(403).send("Access denied. Mentors only.");
+  }
+  next();
+}
+
+module.exports = { requireAuth, requireMentor };

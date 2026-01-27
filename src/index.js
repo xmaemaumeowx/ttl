@@ -184,6 +184,10 @@ app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
   res.render("calendar");
 });
 
+const calendarRoutes = require('./routes/calendar');
+app.use('/calendar', calendarRoutes);
+
+
 /* ===============================
   REPORTS
 ================================ */

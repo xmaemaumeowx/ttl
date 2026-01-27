@@ -13,63 +13,116 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
 
     <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   const calendarEl = document.getElementById('calendar');
 
-  if(calendarEl) {
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      selectable: true,
-      editable: true,
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+  if(!calendarEl) return;
+
+  // Fetch existing slots from backend
+  async function fetchSlots() {
+    const res = await fetch('/calendar/slots');
+    const data = await res.json();
+    return data.map(slot => ({
+      id: slot.slot_id,
+      title: `${slot.mentor_name} (${slot.booked_count}/${slot.capacity})`,
+      start: slot.start_time,
+      end: slot.end_time,
+      extendedProps: { 
+        slotId: slot.slot_id,
+        capacity: slot.capacity,
+        bookedCount: slot.booked_count
       },
-      events: '/calendar/events', // fetch from backend
-
-      select: async function(info) {
-        const title = prompt('Enter event title:');
-        if (title) {
-          try {
-            const res = await fetch('/calendar/events', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                title,
-                start: info.startStr,
-                end: info.endStr,
-                all_day: info.allDay
-              })
-            });
-            const newEvent = await res.json();
-            calendar.addEvent(newEvent);
-          } catch (err) {
-            alert('Failed to create event');
-            console.error(err);
-          }
-        }
-        calendar.unselect();
-      },
-
-      eventClick: async function(info) {
-        if(confirm(`Delete event "${info.event.title}"?`)) {
-          try {
-            await fetch(`/calendar/events/${info.event.id}`, { method: 'DELETE' });
-            info.event.remove();
-          } catch (err) {
-            alert('Failed to delete event');
-            console.error(err);
-          }
-        }
-      }
-    });
-
-    calendar.render();
+      backgroundColor: slot.booked_count >= slot.capacity ? '#f39c12' : '#28a745',
+      borderColor: '#000',
+      textColor: '#fff'
+    }));
   }
+
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    selectable: true,
+    editable: false,
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    events: await fetchSlots(),
+
+    // Mentor creates slot
+    select: async function(info) {
+      if('<%= user.role %>' !== 'mentor') return; // Only mentors can create slots
+
+      const capacity = prompt('Enter capacity (default 1):') || 1;
+      try {
+        const res = await fetch('/calendar/slots', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            start_time: info.startStr,
+            end_time: info.endStr,
+            capacity
+          })
+        });
+        const newSlot = await res.json();
+
+        calendar.addEvent({
+          id: newSlot.slot_id,
+          title: `${'<%= user.full_name %>'} (0/${newSlot.capacity})`,
+          start: newSlot.start_time,
+          end: newSlot.end_time,
+          extendedProps: { 
+            slotId: newSlot.slot_id,
+            capacity: newSlot.capacity,
+            bookedCount: 0
+          },
+          backgroundColor: '#28a745',
+          borderColor: '#000',
+          textColor: '#fff'
+        });
+        alert('Slot created!');
+      } catch (err) {
+        console.error(err);
+        alert('Failed to create slot');
+      }
+
+      calendar.unselect();
+    },
+
+    // Student books/clicks slot
+    eventClick: async function(info) {
+      const slot = info.event.extendedProps;
+
+      if('<%= user.role %>' === 'mentor') {
+        alert('Mentor cannot book slots. Click to see info only.');
+        return;
+      }
+
+      const confirmBooking = confirm(`Book slot with ${info.event.title}?`);
+      if(!confirmBooking) return;
+
+      try {
+        const res = await fetch(`/calendar/slots/${slot.slotId}/book`, { method: 'POST' });
+        if(res.status === 400) return alert('Already booked this slot');
+
+        const booking = await res.json();
+        if(booking.status === 'confirmed') {
+          alert('Slot booked successfully!');
+          info.event.setProp('title', `${info.event.title.split('(')[0]}(${slot.bookedCount + 1}/${slot.capacity})`);
+          info.event.setProp('backgroundColor', (slot.bookedCount + 1 >= slot.capacity) ? '#f39c12' : '#28a745');
+        } else {
+          alert('Slot full! You are on the waitlist.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to book slot');
+      }
+    }
+  });
+
+  calendar.render();
 });
 </script>
-
 
     <style>
       #calendar { min-height: 600px; height: 650px; margin-top: 20px; }

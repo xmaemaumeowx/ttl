@@ -1,43 +1,63 @@
 const express = require('express');
 const router = express.Router();
-const { getEventsByUser, createEvent, deleteEvent } = require('../models/eventModel');
+const requireAuth = require('../middleware/auth');
 
-// Middleware to require auth
-function requireAuth(req, res, next) {
-  if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-  next();
-}
+const mentorSlotModel = require('../models/mentorSlotModel');
+const bookingModel = require('../models/bookingModel');
 
-// GET all events for logged-in user
-router.get('/events', requireAuth, async (req, res) => {
+// Mentor creates slot
+router.post('/slots', requireAuth, async (req, res) => {
   try {
-    const events = await getEventsByUser(req.user.userId);
-    res.json(events);
+    if (req.user.role !== 'mentor') return res.status(403).send('Forbidden');
+
+    const { start_time, end_time, capacity } = req.body;
+    const slot = await mentorSlotModel.createSlot(req.user.user_id, start_time, end_time, capacity);
+    res.json(slot);
   } catch (err) {
-    console.error('Error fetching events:', err);
-    res.status(500).json({ error: 'Failed to fetch events' });
+    console.error(err);
+    res.status(500).send('Server error');
   }
 });
 
-// POST create new event
-router.post('/events', requireAuth, async (req, res) => {
+// Get all slots (student & mentor view)
+router.get('/slots', requireAuth, async (req, res) => {
   try {
-    const event = await createEvent({ ...req.body, user_id: req.user.userId });
-    res.status(201).json(event);
+    const slots = await mentorSlotModel.getAllSlots();
+    res.json(slots);
   } catch (err) {
-    console.error('Error creating event:', err);
-    res.status(500).json({ error: 'Failed to create event' });
+    console.error(err);
+    res.status(500).send('Server error');
   }
 });
 
-// DELETE an event
-router.delete('/events/:id', requireAuth, async (req, res) => {
+// Book a slot
+router.post('/slots/:id/book', requireAuth, async (req, res) => {
   try {
-    await deleteEvent(req.params.id, req.user.userId);
-    res.json({ success: true });
+    const slot_id = req.params.id;
+    const slot = await mentorSlotModel.getSlotById(slot_id);
+    if (!slot) return res.status(404).send('Slot not found');
+
+    const booking = await bookingModel.bookSlot(slot_id, req.user.user_id, slot.capacity);
+    res.json(booking);
   } catch (err) {
-    console.error('Error deleting event:', err);
-    res.status(500).json({ error: 'Failed to delete event' });
+    if (err.code === '23505') return res.status(400).send('Already booked this slot');
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+// Cancel booking
+router.post('/bookings/:id/cancel', requireAuth, async (req, res) => {
+  try {
+    const booking_id = req.params.id;
+
+    const bookingResult = await bookingModel.cancelBooking(booking_id);
+    if (!bookingResult) return res.status(404).send('Booking not found');
+
+    res.json({ message: 'Booking canceled', promoted: bookingResult.promoted });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
   }
 });
 

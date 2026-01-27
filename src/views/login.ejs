@@ -80,7 +80,7 @@
     if (GOOGLE_CLIENT_ID) {
       async function handleCredentialResponse(response) {
         try {
-          const res = await fetch("/auth/google", {
+          const res = await fetch("/google", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ credential: response.credential }),

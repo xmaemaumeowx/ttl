@@ -1,96 +1,63 @@
-// src/routes/calendar.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+const db = require("../db/postgres");
+const { requireAuth } = require("./auth");
 
-const requireAuth = (req, res, next) => {
-  if (!req.user) return res.status(401).send('Unauthorized');
-  next();
-};
-
-const mentorSlotModel = require('../models/mentorSlotModel');
-const bookingModel = require('../models/bookingModel');
-
-/* ===============================
-   GET /calendar/slots
-   Fetch all mentor slots
-================================ */
-router.get('/slots', requireAuth, async (req, res) => {
+// ---- GET all mentor slots ----
+router.get("/slots", requireAuth, async (req, res) => {
   try {
-    const slots = await mentorSlotModel.getAllSlots();
-    const events = slots.map(slot => ({
-      id: slot.slot_id,
-      title: `Mentor Slot (${slot.capacity} seats)`,
-      start: slot.start_time,
-      end: slot.end_time,
-      extendedProps: {
-        capacity: slot.capacity,
-        booked: slot.booked_count || 0
-      }
-    }));
-    res.json(events);
+    const result = await db.query(`SELECT * FROM mentor_slots ORDER BY start_time`);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).json({ error: "Failed to fetch slots" });
   }
 });
 
-/* ===============================
-   POST /calendar/slots
-   Create a new mentor slot
-================================ */
-router.post('/slots', requireAuth, async (req, res) => {
-  try {
-    if (!req.user || req.user.role !== 'mentor') return res.status(403).send('Forbidden');
-    const { start_time, end_time, capacity } = req.body;
-    if (!start_time || !end_time) return res.status(400).send('Missing start or end time');
+// ---- CREATE a mentor slot (mentor only) ----
+router.post("/slots", requireAuth, async (req, res) => {
+  if (req.user.role !== "mentor") return res.status(403).send("Only mentors can create slots");
 
-    const slot = await mentorSlotModel.createSlot(req.user.userId, start_time, end_time, capacity || 1);
-    res.json({
-      id: slot.slot_id,
-      title: `Mentor Slot (${slot.capacity} seats)`,
-      start: slot.start_time,
-      end: slot.end_time,
-      extendedProps: { capacity: slot.capacity, booked: 0 }
-    });
+  const { start_time, end_time } = req.body;
+  try {
+    const result = await db.query(
+      `INSERT INTO mentor_slots (mentor_id, start_time, end_time) VALUES ($1, $2, $3) RETURNING *`,
+      [req.user.userId, start_time, end_time]
+    );
+    res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).json({ error: "Failed to create slot" });
   }
 });
 
-/* ===============================
-   POST /calendar/slots/:id/book
-   Book a slot
-================================ */
-router.post('/slots/:id/book', requireAuth, async (req, res) => {
+// ---- BOOK a slot (learner) ----
+router.post("/slots/:id/book", requireAuth, async (req, res) => {
+  const slotId = req.params.id;
   try {
-    const slot_id = req.params.id;
-    const slot = await mentorSlotModel.getSlotById(slot_id);
-    if (!slot) return res.status(404).send('Slot not found');
-
-    const booking = await bookingModel.bookSlot(slot_id, req.user.userId, slot.capacity);
-    res.json({ message: 'Booked successfully', booking_id: booking.booking_id, slot_id });
+    const result = await db.query(
+      `INSERT INTO bookings (slot_id, learner_id) VALUES ($1, $2) RETURNING *`,
+      [slotId, req.user.userId]
+    );
+    res.json(result.rows[0]);
   } catch (err) {
-    if (err.code === '23505') return res.status(400).send('Already booked this slot');
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).json({ error: "Failed to book slot" });
   }
 });
 
-/* ===============================
-   POST /calendar/bookings/:id/cancel
-   Cancel a booking
-================================ */
-router.post('/bookings/:id/cancel', requireAuth, async (req, res) => {
+// ---- CANCEL booking ----
+router.delete("/slots/:id/book", requireAuth, async (req, res) => {
+  const slotId = req.params.id;
   try {
-    const booking_id = req.params.id;
-    const result = await bookingModel.cancelBooking(booking_id);
-    if (!result) return res.status(404).send('Booking not found');
-
-    res.json({ message: 'Booking canceled', promoted: result.promoted || [] });
+    await db.query(
+      `DELETE FROM bookings WHERE slot_id=$1 AND learner_id=$2`,
+      [slotId, req.user.userId]
+    );
+    res.json({ success: true });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).json({ error: "Failed to cancel booking" });
   }
 });
 

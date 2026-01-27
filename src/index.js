@@ -4,11 +4,12 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-
-const db = require("./db/postgres");
-
-const app = express();
++ const app = express();
+const authRoutes = require('./routes/auth');
++ const db = require("./db/postgres");
 const PORT = process.env.PORT || 10000;
+
++ app.use('/auth', authRoutes); // <-- must be after "app" is defined
 
 /* ===============================
    MIDDLEWARE
@@ -16,7 +17,6 @@ const PORT = process.env.PORT || 10000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
-
 app.use(express.static(path.join(__dirname, "../public")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));

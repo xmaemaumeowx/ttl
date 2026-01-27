@@ -1,17 +1,19 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
+const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const multer = require("multer");
 
-const authRoutes = require("./routes/auth");
-const { requireAuth, requireMentor } = require("./middleware/auth");
+const db = require("./db/postgres"); // keep this as it was
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+// ...all your middleware, views, routes as it was originally
+
 
 // Views
 app.set("view engine", "ejs");

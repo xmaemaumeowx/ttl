@@ -1,73 +1,57 @@
-// src/middleware/auth.js
+// src/routes/auth.js
+const express = require("express");
+const router = express.Router();
+const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
+const db = require("../db/postgres");
 
-/* ===============================
-   Require Authentication Middleware
-   - Parses JWT from cookies
-   - Attaches req.user
-   - Redirects to /login if invalid
-================================ */
-function requireAuth(req, res, next) {
-  const token = req.cookies?.token;
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-  if (!token) return res.redirect("/login");
+router.post("/auth/google", async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) return res.status(400).send("Missing credential");
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach decoded JWT to request
-    next();
-  } catch (err) {
-    console.error("JWT verification failed:", err);
-    res.clearCookie("token"); // Clear invalid token
-    return res.redirect("/login");
-  }
-}
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
 
-/* ===============================
-   Require Mentor Role Middleware
-   - Must be authenticated first
-   - Only allows mentors
-================================ */
-function requireMentor(req, res, next) {
-  if (!req.user) return res.redirect("/login");
+    const payload = ticket.getPayload();
+    const email = payload.email;
+    const fullName = payload.name;
 
-  if (req.user.role !== "mentor") {
-    console.warn(`Unauthorized access attempt by user ${req.user.userId}`);
-    return res.status(403).send("Access denied. Mentors only.");
-  }
-  next();
-}
+    // Check if user exists
+    let result = await db.query(`SELECT * FROM users WHERE email=$1`, [email]);
+    let user;
 
-/* ===============================
-   Optional Middleware to Load User for Layouts
-   - Use in routes to populate sidebar / avatar
-================================ */
-async function loadUserFromDB(req, res, next) {
-  const db = require("../db/postgres"); // Lazy load to avoid circular dependency
-  if (!req.user?.userId) return next();
+    if (result.rows.length === 0) {
+      // Create user if not exists
+      const insert = await db.query(
+        `INSERT INTO users (full_name, email) VALUES ($1, $2) RETURNING *`,
+        [fullName, email]
+      );
+      user = insert.rows[0];
+    } else {
+      user = result.rows[0];
+    }
 
-  try {
-    const result = await db.query(
-      `SELECT user_id, full_name, email, role, avatar
-       FROM users WHERE user_id = $1`,
-      [req.user.userId]
+    // Create JWT
+    const token = jwt.sign(
+      { userId: user.user_id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
     );
 
-    if (result.rows[0]) {
-      const u = result.rows[0];
-      res.locals.user = {
-        userId: u.user_id,
-        fullName: u.full_name,
-        email: u.email,
-        role: u.role,
-        avatar: u.avatar,
-      };
-    }
-    next();
-  } catch (err) {
-    console.error("Error loading user for layout:", err);
-    next();
-  }
-}
+    // Send cookie
+    res.cookie("token", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-module.exports = { requireAuth, requireMentor, loadUserFromDB };
+    // Respond success
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Google login error:", err);
+    res.status(500).send("Google login failed");
+  }
+});
+
+module.exports = router;

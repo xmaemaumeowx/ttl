@@ -9,6 +9,8 @@ const db = require("./db/postgres");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
+const authRoutes = require("./routes/auth");
+app.use("/", authRoutes);
 
 /* ===============================
    MIDDLEWARE

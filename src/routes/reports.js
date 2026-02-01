@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db/postgres");
 
+// ===== Auth Guards =====
 function requireAuth(req, res, next) {
   if (!req.user) return res.redirect("/login");
   next();
@@ -12,6 +13,7 @@ function requireLearner(req, res, next) {
   next();
 }
 
+// ===== Learner Reports =====
 router.get("/", requireAuth, requireLearner, async (req, res) => {
   try {
     const result = await db.query(
@@ -22,7 +24,7 @@ router.get("/", requireAuth, requireLearner, async (req, res) => {
         COUNT(CASE WHEN p.status = 'Completed' THEN 1 END) AS completed_projects
       FROM learning_tracks lt
       LEFT JOIN projects p 
-        ON p.track_id = lt.track_id 
+        ON p.track_id = lt.track_id
         AND p.learner_id = $1
       GROUP BY lt.track_name
       ORDER BY lt.track_name
@@ -33,7 +35,8 @@ router.get("/", requireAuth, requireLearner, async (req, res) => {
     const reports = result.rows.map(row => {
       const total = Number(row.total_projects);
       const completed = Number(row.completed_projects);
-      const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
+      const progress =
+        total === 0 ? 0 : Math.round((completed / total) * 100);
 
       let milestones = "Not started";
       let status = "Pending";
@@ -58,20 +61,19 @@ router.get("/", requireAuth, requireLearner, async (req, res) => {
     });
 
     res.render("reports", {
-      pageTitle: "My Learning Reports | The Tech Lab",
-      activePage: "reports",
+      user: req.user,
       reports,
-      success: "",
-      error: ""
+      success: null,
+      error: null
     });
 
   } catch (err) {
     console.error("Learner reports error:", err);
+
     res.status(500).render("reports", {
-      pageTitle: "My Learning Reports | The Tech Lab",
-      activePage: "reports",
+      user: req.user,
       reports: [],
-      success: "",
+      success: null,
       error: "Unable to generate learning report"
     });
   }

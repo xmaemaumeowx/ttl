@@ -38,31 +38,32 @@
           <tbody>
             <% reports.forEach(r => { %>
               <tr>
-                <td>
-                  <strong><%= r.track_name %></strong>
-                </td>
+                <!-- Track Name -->
+                <td><strong><%= r.track_name %></strong></td>
 
+                <!-- Progress Bar -->
                 <td style="min-width:220px;">
                   <div class="progress ttl-progress">
-                    <div
-                      class="progress-bar
+                    <div class="progress-bar
                         <%= r.progress === 100 ? 'bg-success' :
                             r.progress >= 50 ? 'bg-primary' :
                             'bg-secondary' %>"
-                      style="width:<%= r.progress %>%">
-                      <%= r.progress %>%
+                         style="width:<%= r.progress || 0 %>%">
+                      <%= r.progress || 0 %>%
                     </div>
                   </div>
                 </td>
 
+                <!-- Milestones -->
                 <td>
-                  <span class="badge ttl-badge"><%= r.milestones %></span>
+                  <span class="badge ttl-badge"><%= r.milestones || 0 %></span>
                 </td>
 
+                <!-- Status -->
                 <td>
                   <span class="status-pill
                     <%= r.status === 'Completed' ? 'status-complete' :
-                        r.status === 'In Progress' ? 'status-active' :
+                        r.status === 'Ongoing' ? 'status-active' :
                         'status-planned' %>">
                     <%= r.status %>
                   </span>

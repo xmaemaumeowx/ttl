@@ -14,8 +14,6 @@ router.get('/', async (req, res) => {
         p.status,
         p.start_date,
         p.end_date,
-        COALESCE(p.progress, 0) AS progress,
-        COALESCE(p.milestones, 0) AS milestones,
         lt.track_name
       FROM projects p
       LEFT JOIN learning_tracks lt ON lt.track_id = p.track_id

@@ -63,7 +63,7 @@
                 <td>
                   <span class="status-pill
                     <%= r.status === 'Completed' ? 'status-complete' :
-                        r.status === 'Ongoing' ? 'status-active' :
+                        (r.status === 'In Progress' || r.status === 'Ongoing') ? 'status-active' :
                         'status-planned' %>">
                     <%= r.status %>
                   </span>

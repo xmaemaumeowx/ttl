@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
         p.status,
         p.start_date,
         p.end_date,
-        lt.track_name,
+        lt.track_name AS track_name,
         -- Force output as Integer to ensure EJS comparisons work
         CASE 
           WHEN p.status = 'Completed' THEN 100

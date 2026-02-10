@@ -36,22 +36,29 @@
           </thead>
           <tbody>
             <% reports.forEach(r => { %>
-              <tr>
-                <td><strong><%= r.track_name || 'General' %></strong>
-                <p style="font-size: 10px; color: rgb(32, 199, 249);">Debug: <%= JSON.stringify(r) %></p></td>
+          <tr>
+            <td><strong><%= r.track_name %></strong></td>
 
-                <td style="min-width:220px;">
-                  <div class="progress ttl-progress">
-                    <div class="progress-bar 
-                        <%= Number(r.progress) === 100 ? 'bg-success' : 
-                            Number(r.progress) >= 50 ? 'bg-primary' : 
-                            'bg-secondary' %>" 
-                         role="progressbar"
-                         style="width: <%= r.progress || 0 %>%" 
-                         aria-valuenow="<%= r.progress || 0 %>" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100">
-                      <%= r.progress || 0 %>%
+            <td>
+              <div class="progress ttl-progress">
+                <div class="progress-bar <%= r.progress === 100 ? 'bg-success' : 'bg-primary' %>" 
+                    style="width: <%= r.progress %>%">
+                  <%= r.progress %>%
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span class="badge ttl-badge"><%= r.milestones %></span>
+            </td>
+
+            <td>
+              <span class="status-pill <%= r.status === 'Completed' ? 'status-complete' : 'status-active' %>">
+                <%= r.status %>
+              </span>
+            </td>
+          </tr>
+        <% }) %>
                     </div>
                   </div>
                 </td>

@@ -9,11 +9,11 @@
     <p class="text-muted">Your course progress and milestones overview</p>
 
     <% if (success && success.length > 0) { %>
-      <div class="toast success"><%= success %></div>
+      <div class="toast success"><%= success[0] %></div>
     <% } %>
 
     <% if (error && error.length > 0) { %>
-      <div class="toast error"><%= error %></div>
+      <div class="toast error"><%= error[0] %></div>
     <% } %>
 
     <% if (!reports || reports.length === 0) { %>
@@ -36,42 +36,28 @@
           </thead>
           <tbody>
             <% reports.forEach(r => { %>
-          <tr>
-            <td><strong><%= r.track_name %></strong></td>
+              <tr>
+                <td><strong><%= r.track_name %></strong></td>
 
-            <td>
-              <div class="progress ttl-progress">
-                <div class="progress-bar <%= r.progress === 100 ? 'bg-success' : 'bg-primary' %>" 
-                    style="width: <%= r.progress %>%">
-                  <%= r.progress %>%
-                </div>
-              </div>
-            </td>
-
-            <td>
-              <span class="badge ttl-badge"><%= r.milestones %></span>
-            </td>
-
-            <td>
-              <span class="status-pill <%= r.status === 'Completed' ? 'status-complete' : 'status-active' %>">
-                <%= r.status %>
-              </span>
-            </td>
-          </tr>
-        <% }) %>
+                <td>
+                  <div class="progress ttl-progress">
+                    <div 
+                      class="progress-bar <%= r.progress === 100 ? 'bg-success' : 'bg-primary' %>" 
+                      style="width: <%= r.progress %>%">
+                      <%= r.progress %>%
                     </div>
                   </div>
                 </td>
 
                 <td>
-                  <span class="badge ttl-badge"><%= r.milestones || 0 %></span>
+                  <span class="badge ttl-badge"><%= r.milestones %></span>
                 </td>
 
                 <td>
                   <span class="status-pill 
-                    <%= r.status === 'Completed' ? 'status-complete' : 
-                        (r.status === 'In Progress' || r.status === 'Ongoing') ? 'status-active' : 
-                        'status-planned' %>">
+                    <%= r.status === 'Completed' 
+                        ? 'status-complete' 
+                        : 'status-active' %>">
                     <%= r.status %>
                   </span>
                 </td>
@@ -80,6 +66,7 @@
           </tbody>
         </table>
       </div>
+
     <% } %>
   </main>
 </div>

@@ -42,23 +42,25 @@
                 <td>
                   <div class="progress ttl-progress">
                     <div 
-                      class="progress-bar <%= r.progress === 100 ? 'bg-success' : 'bg-primary' %>" 
-                      style="width: <%= r.progress %>%">
-                      <%= r.progress %>%
+                      class="progress-bar <%= (Number(r.progress) === 100) ? 'bg-success' : 'bg-primary' %>" 
+                      style="width: <%= Number(r.progress) || 0 %>%;">
+                      <%= Number(r.progress) || 0 %>%
                     </div>
                   </div>
                 </td>
 
                 <td>
-                  <span class="badge ttl-badge"><%= r.milestones %></span>
+                  <span class="badge ttl-badge"><%= r.milestones || 0 %></span>
                 </td>
 
                 <td>
                   <span class="status-pill 
                     <%= r.status === 'Completed' 
                         ? 'status-complete' 
-                        : 'status-active' %>">
-                    <%= r.status %>
+                        : r.status === 'In Progress'
+                        ? 'status-active'
+                        : 'status-planned' %>">
+                    <%= r.status || 'Not Started' %>
                   </span>
                 </td>
               </tr>

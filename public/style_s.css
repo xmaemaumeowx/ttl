@@ -1059,3 +1059,72 @@ main {
 .delete-btn:hover {
   background-color: #c0392b;
 }
+/* ============================= */
+/* TTL Progress Bar Styling */
+/* ============================= */
+
+.ttl-progress {
+  background-color: #e9ecef;
+  border-radius: 8px;
+  height: 22px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  line-height: 22px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  color: #ffffff;
+  transition: width 0.4s ease-in-out;
+}
+
+/* Status Colors */
+
+.bg-primary {
+  background: linear-gradient(90deg, #14b8a6, #0d9488);
+}
+
+.bg-success {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+/* ============================= */
+/* Status Pills */
+/* ============================= */
+
+.status-pill {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-complete {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-active {
+  background-color: #dbeafe;
+  color: #1e3a8a;
+}
+
+.status-planned {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+/* ============================= */
+/* Badge Styling */
+/* ============================= */
+
+.ttl-badge {
+  background-color: #14b8a6;
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}

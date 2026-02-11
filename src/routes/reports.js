@@ -8,8 +8,7 @@ router.get('/', async (req, res) => {
     const learnerId = req.user.id;
 
     const result = await db.query(`
-      SELECT 
-        lt.track_id,
+      SELECT DISTINCT
         lt.track_name,
         COUNT(p.project_id) AS total_projects,
         COUNT(CASE WHEN p.status = 'Completed' THEN 1 END) AS completed_projects
@@ -17,8 +16,8 @@ router.get('/', async (req, res) => {
       LEFT JOIN projects p 
         ON p.track_id = lt.track_id 
         AND p.learner_id = $1
-      GROUP BY lt.track_id, lt.track_name
-      ORDER BY lt.track_id ASC
+      GROUP BY lt.track_name
+      ORDER BY lt.track_name ASC
     `, [learnerId]);
 
     const reports = result.rows.map(track => {

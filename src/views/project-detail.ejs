@@ -1,46 +1,88 @@
 <%- include('partials/header'); %>
 <%- include('partials/navbar', { activePage: 'projects' }); %>
+
 <div class="dashboard">
   <%- include('partials/sidebar', { activePage: 'projects' }); %>
+
   <main>
     <section class="content-section">
       <div class="project-detail-card">
+
         <div class="project-header">
-          <h2><%= project.NAME %></h2>
-          <% if (project.STATUS) { %>
-            <span class="project-status <%= project.STATUS.toLowerCase() %>"><%= project.STATUS %></span>
+          <h2><%= project.name %></h2>
+
+          <% if (project.status) { %>
+            <span class="project-status <%= project.status.toLowerCase() %>">
+              <%= project.status %>
+            </span>
           <% } %>
         </div>
+
         <div class="project-body">
-          <p><strong>Start Date:</strong> <%= project.START_DATE ? project.START_DATE.toISOString().split('T')[0] : 'N/A' %></p>
-          <p><strong>End Date:</strong> <%= project.END_DATE ? project.END_DATE.toISOString().split('T')[0] : 'N/A' %></p>
-          <p><strong>Technology Stack:</strong> <%= project.TECHNOLOGY_STACK || 'N/A' %></p>
-          <p><strong>Description:</strong> <%= project.DESCRIPTION || 'No description provided.' %></p>
-          <p><strong>Track:</strong> <%= project.TRACK_NAME || 'N/A' %></p>
+          <p><strong>Start Date:</strong>
+            <%= project.start_date 
+                ? new Date(project.start_date).toISOString().split('T')[0] 
+                : 'N/A' %>
+          </p>
+
+          <p><strong>End Date:</strong>
+            <%= project.end_date 
+                ? new Date(project.end_date).toISOString().split('T')[0] 
+                : 'N/A' %>
+          </p>
+
+          <p><strong>Technology Stack:</strong>
+            <%= project.technology_stack || 'N/A' %>
+          </p>
+
+          <p><strong>Description:</strong>
+            <%= project.description || 'No description provided.' %>
+          </p>
+
+          <p><strong>Track:</strong>
+            <%= project.track_name || 'N/A' %>
+          </p>
+
           <p><strong>GitHub Link:</strong>
-            <% if (project.GITHUB_LINK) { %>
-              <a href="<%= project.GITHUB_LINK %>" target="_blank" class="ext-link"><%= project.GITHUB_LINK %></a>
-            <% } else { %> N/A <% } %>
+            <% if (project.github_link) { %>
+              <a href="<%= project.github_link %>" target="_blank" class="ext-link">
+                <%= project.github_link %>
+              </a>
+            <% } else { %>
+              N/A
+            <% } %>
           </p>
+
           <p><strong>Live Link:</strong>
-            <% if (project.LIVE_LINK) { %>
-              <a href="<%= project.LIVE_LINK %>" target="_blank" class="ext-link"><%= project.LIVE_LINK %></a>
-            <% } else { %> N/A <% } %>
+            <% if (project.live_link) { %>
+              <a href="<%= project.live_link %>" target="_blank" class="ext-link">
+                <%= project.live_link %>
+              </a>
+            <% } else { %>
+              N/A
+            <% } %>
           </p>
         </div>
+
         <div class="project-footer">
-          <a href="/projects/edit/<%= project.PROJECT_ID %>" class="edit-btn">Edit Project</a>
-          <a href="/projects" class="back-btn">Back to Projects</a>
+          <a href="/projects/edit/<%= project.project_id %>" class="edit-btn">
+            Edit Project
+          </a>
+          <a href="/projects" class="back-btn">
+            Back to Projects
+          </a>
         </div>
+
       </div>
 
-      <!-- Toast Notifications -->
       <% if (typeof success !== 'undefined' && success) { %>
         <div id="toast" class="toast"><%= success %></div>
       <% } else if (typeof error !== 'undefined' && error) { %>
         <div id="toast" class="toast error"><%= error %></div>
       <% } %>
+
     </section>
   </main>
 </div>
+
 <%- include('partials/footer'); %>

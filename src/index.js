@@ -190,7 +190,7 @@ app.use('/calendar', calendarRoutes);
 
 /* ===============================
   REPORTS
-================================ */
+================================ 
 
 app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.pageTitle = "Reports | The Tech Lab";
@@ -207,7 +207,7 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.render("reports", {
     reports: result.rows || [],
   });
-});
+});*/
 
 
 /* ===============================
@@ -218,10 +218,9 @@ app.get("/learners", requireAuth, requireMentor, loadUserFromDB, async (req, res
   res.locals.activePage = "learners";
 
   const result = await db.query(
-    `SELECT u.user_id, u.full_name, u.email
-     FROM mentor_learner ml
-     JOIN users u ON ml.user_id = u.user_id
-     WHERE ml.mentor_id = $1`,
+    `SELECT *
+     FROM users u
+     WHERE role = 'learner`,
     [req.user.userId]
   );
 

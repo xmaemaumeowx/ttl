@@ -190,7 +190,7 @@ app.use('/calendar', calendarRoutes);
 
 /* ===============================
   REPORTS
-================================ 
+================================ */
 
 app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.pageTitle = "Reports | The Tech Lab";
@@ -201,13 +201,22 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.error = null;
 
   const result = await db.query(
-    `SELECT * FROM courses ORDER BY created_at DESC`
+    `SELECT DISTINCT
+        lt.track_name,
+        COUNT(p.project_id) AS total_projects,
+        COUNT(CASE WHEN p.status = 'Completed' THEN 1 END) AS completed_projects
+      FROM learning_tracks lt
+      LEFT JOIN projects p 
+        ON p.track_id = lt.track_id 
+        AND p.learner_id = $1
+      GROUP BY lt.track_name
+      ORDER BY lt.track_name ASC
+    `, [learnerId]);
   );
 
   res.render("reports", {
     reports: result.rows || [],
   });
-});*/
 
 
 /* ===============================

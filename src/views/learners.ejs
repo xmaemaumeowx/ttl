@@ -20,11 +20,9 @@
         <tbody>
           <% learners.forEach(learner => { %>
             <tr>
-              <td><%= learner.FULL_NAME %></td>
-              <td><%= learner.EMAIL %></td>
-              <td><%= learner.TRACK_NAME %></td>
-              <td><%= learner.TRACK_DESCRIPTION %></td>
-              <td><%= learner.DURATION_WEEKS %></td>
+              <td><%= learner.full_name %></td>
+              <td><%= learner.email %></td> 
+              <td><%= learner.avatar %></td>              
             </tr>
           <% }) %>
         </tbody>

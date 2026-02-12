@@ -1,15 +1,55 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../db/postgres"); // ✅ FIXED
+const db = require("../db/postgres");
 
-// GET /reports
-router.get("/", async (req, res) => {
+/* ===============================
+   AUTH MIDDLEWARE
+================================ */
+
+function requireAuth(req, res, next) {
+  if (!req.user) return res.redirect("/login");
+  next();
+}
+
+async function loadUserFromDB(req, res, next) {
+  if (!req.user?.userId) return next();
+
   try {
-    if (!req.user) {
-      return res.redirect("/login");
+    const result = await db.query(
+      `SELECT user_id, full_name, email, role, avatar
+       FROM users
+       WHERE user_id = $1`,
+      [req.user.userId]
+    );
+
+    if (result.rows[0]) {
+      const u = result.rows[0];
+      res.locals.user = {
+        userId: u.user_id,
+        fullName: u.full_name,
+        email: u.email,
+        role: u.role,
+        avatar: u.avatar,
+      };
     }
 
-    const learnerId = req.user.userId; // ✅ FIXED
+    next();
+  } catch (err) {
+    console.error("User load error:", err);
+    next();
+  }
+}
+
+/* ===============================
+   GET REPORTS
+================================ */
+
+router.get("/", requireAuth, loadUserFromDB, async (req, res) => {
+  try {
+    res.locals.pageTitle = "Reports | The Tech Lab";
+    res.locals.activePage = "reports";
+
+    const learnerId = req.user.userId;
 
     const result = await db.query(
       `
@@ -18,8 +58,8 @@ router.get("/", async (req, res) => {
         COUNT(p.project_id) AS total_projects,
         COUNT(CASE WHEN p.status = 'Completed' THEN 1 END) AS completed_projects
       FROM learning_tracks lt
-      LEFT JOIN projects p 
-        ON p.track_id = lt.track_id 
+      LEFT JOIN projects p
+        ON p.track_id = lt.track_id
         AND p.learner_id = $1
       GROUP BY lt.track_name
       ORDER BY lt.track_name ASC
@@ -37,35 +77,25 @@ router.get("/", async (req, res) => {
       }
 
       let status = "Not Started";
-      if (progress === 100 && total > 0) {
-        status = "Completed";
-      } else if (progress > 0) {
-        status = "In Progress";
-      }
+      if (progress === 100 && total > 0) status = "Completed";
+      else if (progress > 0) status = "In Progress";
 
       return {
         track_name: track.track_name,
+        total_projects: total,
+        completed_projects: completed,
         progress,
-        milestones: completed,
         status
       };
     });
 
     res.render("reports", {
-      reports,
-      user: res.locals.user || null,
-      success: null,
-      error: null
+      reports
     });
 
   } catch (err) {
     console.error("Reports error:", err);
-    res.render("reports", {
-      reports: [],
-      user: res.locals.user || null,
-      success: null,
-      error: "Failed to load reports."
-    });
+    res.render("reports", { reports: [] });
   }
 });
 

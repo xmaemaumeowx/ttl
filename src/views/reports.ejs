@@ -2,23 +2,14 @@
 <%- include('partials/navbar') %>
 
 <div class="dashboard">
-  <%- include('partials/sidebar', { activePage: 'reports', user: user }) %>
+  <%- include('partials/sidebar', { activePage: 'reports' }) %>
 
   <main class="dashboard-main-content">
     <h1 class="page-title">📊 Learning Reports</h1>
     <p class="text-muted">Your course progress and milestones overview</p>
 
-    <% if (success && success.length > 0) { %>
-      <div class="toast success"><%= success[0] %></div>
-    <% } %>
-
-    <% if (error && error.length > 0) { %>
-      <div class="toast error"><%= error[0] %></div>
-    <% } %>
-
     <% if (!reports || reports.length === 0) { %>
       <div class="empty-state">
-        <i class="fas fa-chart-line"></i>
         <h4>No progress data yet</h4>
         <p>Once you start working on projects, your learning progress will appear here.</p>
       </div>
@@ -29,29 +20,36 @@
           <thead>
             <tr>
               <th>Learning Track</th>
-              <th>Total Projects</th>
-              <th>Completed Projects</th>
+              <th>Progress</th>
+              <th>Completed</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
             <% reports.forEach(r => { %>
               <tr>
-                <td><strong><%= r.track_name %></strong></td>
-
                 <td>
-                  <div class="progress ttl-progress">
-                    <div 
-                      class="progress-bar <%= (Number(r.progress) === 100) ? 'bg-success' : 'bg-primary' %>" >
-                      <%= Number(r.progress) || 0 %>%
+                  <strong><%= r.track_name %></strong>
+                </td>
+
+                <!-- Progress Column -->
+                <td style="min-width:200px;">
+                  <div class="ttl-progress-container">
+                    <div class="ttl-progress-bar"
+                         style="width: <%= r.progress %>%;">
                     </div>
                   </div>
+                  <small><%= r.progress %>% Complete</small>
                 </td>
 
+                <!-- Completed Column -->
                 <td>
-                  <span class="badge ttl-badge"><%= r.milestones || 0 %></span>
+                  <span class="badge ttl-badge">
+                    <%= r.completed_projects %> / <%= r.total_projects %>
+                  </span>
                 </td>
 
+                <!-- Status Column -->
                 <td>
                   <span class="status-pill 
                     <%= r.status === 'Completed' 
@@ -59,7 +57,7 @@
                         : r.status === 'In Progress'
                         ? 'status-active'
                         : 'status-planned' %>">
-                    <%= r.status || 'Not Started' %>
+                    <%= r.status %>
                   </span>
                 </td>
               </tr>

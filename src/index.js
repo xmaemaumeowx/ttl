@@ -190,7 +190,7 @@ app.use('/calendar', calendarRoutes);
 
 /* ===============================
   REPORTS
-================================ */
+================================ 
 
 app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.pageTitle = "Reports | The Tech Lab";
@@ -215,7 +215,9 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.render("reports", {
     reports: result.rows || [],
   });
-});
+});*/
+const reportsRouter = require('./routes/reports');
+app.use('/reports', reportsRouter);
 
 
 

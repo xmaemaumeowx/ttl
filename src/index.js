@@ -217,7 +217,7 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   });
 });*/
 const reportsRouter = require('./routes/reports');
-app.use('/', reportsRouter);
+app.use('/reports', reportsRouter);
 
 
 

@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../db');
 
 // GET /reports
-router.get('/', async (req, res) => {
+router.get('/reports', async (req, res) => {
   try {
     const learnerId = req.user.id;
 

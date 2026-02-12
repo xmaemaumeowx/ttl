@@ -196,9 +196,7 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.pageTitle = "Reports | The Tech Lab";
   res.locals.activePage = "reports";
 
-  // ✅ define toast defaults
-  res.locals.success = null;
-  res.locals.error = null;
+  const learnerId = req.user.userId; // ✅ define this
 
   const result = await db.query(
     `SELECT DISTINCT
@@ -210,13 +208,15 @@ app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
         ON p.track_id = lt.track_id 
         AND p.learner_id = $1
       GROUP BY lt.track_name
-      ORDER BY lt.track_name ASC
-    `, [learnerId]);
+      ORDER BY lt.track_name ASC`,
+    [learnerId]
   );
 
   res.render("reports", {
     reports: result.rows || [],
   });
+});
+
 
 
 /* ===============================
@@ -227,14 +227,14 @@ app.get("/learners", requireAuth, requireMentor, loadUserFromDB, async (req, res
   res.locals.activePage = "learners";
 
   const result = await db.query(
-    `SELECT *
-     FROM users u
-     WHERE role = 'learner`,
-    [req.user.userId]
+    `SELECT user_id, full_name, email
+     FROM users
+     WHERE role = 'learner'`
   );
 
   res.render("learners", { learners: result.rows });
 });
+
 
 
 /* ===============================

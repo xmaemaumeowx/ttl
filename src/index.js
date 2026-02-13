@@ -52,6 +52,7 @@ app.use((req, res, next) => {
 /* ===============================
    LOAD USER FROM DB (FOR AVATAR & ROLE)
 ================================ */
+app.use(loadUserFromDB);
 async function loadUserFromDB(req, res, next) {
   if (!req.user?.userId) return next();
   try {

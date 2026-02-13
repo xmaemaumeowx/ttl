@@ -22,18 +22,18 @@
       <!-- COURSES GRID -->
       <div class="tracks-grid">
 
-        <% courses.forEach(course => { %>
+        <% courses.forEach(courses => { %>
           <div class="track-card">
 
             <!-- Course Header -->
             <div class="course-header">
-              <h3><%= course.course_name %></h3>
+              <h3><%= courses.course_name %></h3>
             </div>
 
             <!-- Course Body -->
             <div class="course-card">
               <p>
-                <%= course.description || 'No description provided.' %>
+                <%= courses.description || 'No description provided.' %>
               </p>
             </div>
 
@@ -41,7 +41,7 @@
             <% if (user && user.role === 'mentor') { %>
               <div class="mentor-actions">
                 <form
-                  action="/courses/delete/<%= course.course_id %>"
+                  action="/courses/delete/<%= courses.course_id %>"
                   method="POST"
                   onsubmit="return confirm('Are you sure you want to delete this course?');"
                 >

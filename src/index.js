@@ -147,7 +147,15 @@ app.use("/courses", loadUserFromDB, coursesRouter);
 /* ===============================
    CALENDAR
 ================================ */
-app.use("/calendar", loadUserFromDB, calendarRoutes);
+app.get("/calendar", requireAuth, loadUserFromDB, async (req, res) => {
+  res.locals.pageTitle = "Calendar | The Tech Lab";
+  res.locals.activePage = "calendar";
+
+  res.render("calendar", {
+    user: res.locals.user
+  });
+});
+
 
 /* ===============================
    REPORTS

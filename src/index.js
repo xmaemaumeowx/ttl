@@ -145,16 +145,10 @@ const coursesRouter = require("./routes/courses");
 app.use("/courses", loadUserFromDB, coursesRouter);
 
 /* ===============================
-   CALENDAR
+   CALENDAR ROUTES
 ================================ */
-app.get("/calendar", requireAuth, loadUserFromDB, async (req, res) => {
-  res.locals.pageTitle = "Calendar | The Tech Lab";
-  res.locals.activePage = "calendar";
-
-  res.render("calendar", {
-    user: res.locals.user
-  });
-});
+const calendarRouter = require("./routes/calendar");
+app.use("/calendar", loadUserFromDB, calendarRouter);
 
 
 /* ===============================

@@ -1,27 +1,16 @@
-<%- include('partials/header', { pageTitle: 'Calendar | The Tech Lab' }) %>
-<%- include('partials/navbar') %>
-<div class="dashboard">
-  <%- include('partials/sidebar', { activePage: 'calendar' }) %>
-  
-  <main class="dashboard-main-content">
-    <!-- FullCalendar CSS -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
-
-    <div id="calendar"></div>
-
-    <!-- FullCalendar JS -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-
-    <script>
+<script>
 document.addEventListener('DOMContentLoaded', async function() {
   const calendarEl = document.getElementById('calendar');
+  if (!calendarEl) return;
 
-  if(!calendarEl) return;
+  // SAFE USER VALUES
+  const currentUserRole = "<%= user?.role || '' %>";
+  const currentUserName = "<%= user?.fullName || '' %>";
 
-  // Fetch existing slots from backend
   async function fetchSlots() {
     const res = await fetch('/calendar/slots');
     const data = await res.json();
+
     return data.map(slot => ({
       id: slot.slot_id,
       title: `${slot.mentor_name} (${slot.booked_count}/${slot.capacity})`,
@@ -49,11 +38,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     },
     events: await fetchSlots(),
 
-    // Mentor creates slot
+    // ===============================
+    // Mentor Creates Slot
+    // ===============================
     select: async function(info) {
-      if('<%= user.role %>' !== 'mentor') return; // Only mentors can create slots
+
+      if (currentUserRole !== 'mentor') return;
 
       const capacity = prompt('Enter capacity (default 1):') || 1;
+
       try {
         const res = await fetch('/calendar/slots', {
           method: 'POST',
@@ -64,11 +57,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             capacity
           })
         });
+
         const newSlot = await res.json();
 
         calendar.addEvent({
           id: newSlot.slot_id,
-          title: `${'<%= user.full_name %>'} (0/${newSlot.capacity})`,
+          title: `${currentUserName} (0/${newSlot.capacity})`,
           start: newSlot.start_time,
           end: newSlot.end_time,
           extendedProps: { 
@@ -80,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           borderColor: '#000',
           textColor: '#fff'
         });
+
         alert('Slot created!');
       } catch (err) {
         console.error(err);
@@ -89,30 +84,44 @@ document.addEventListener('DOMContentLoaded', async function() {
       calendar.unselect();
     },
 
-    // Student books/clicks slot
+    // ===============================
+    // Learner Books Slot
+    // ===============================
     eventClick: async function(info) {
       const slot = info.event.extendedProps;
 
-      if('<%= user.role %>' === 'mentor') {
-        alert('Mentor cannot book slots. Click to see info only.');
+      if (currentUserRole === 'mentor') {
+        alert('Mentor cannot book slots.');
         return;
       }
 
       const confirmBooking = confirm(`Book slot with ${info.event.title}?`);
-      if(!confirmBooking) return;
+      if (!confirmBooking) return;
 
       try {
         const res = await fetch(`/calendar/slots/${slot.slotId}/book`, { method: 'POST' });
-        if(res.status === 400) return alert('Already booked this slot');
+
+        if (res.status === 400) {
+          alert('Already booked this slot');
+          return;
+        }
 
         const booking = await res.json();
-        if(booking.status === 'confirmed') {
+
+        if (booking.status === 'confirmed') {
           alert('Slot booked successfully!');
-          info.event.setProp('title', `${info.event.title.split('(')[0]}(${slot.bookedCount + 1}/${slot.capacity})`);
-          info.event.setProp('backgroundColor', (slot.bookedCount + 1 >= slot.capacity) ? '#f39c12' : '#28a745');
+          info.event.setProp(
+            'title',
+            `${info.event.title.split('(')[0]}(${slot.bookedCount + 1}/${slot.capacity})`
+          );
+          info.event.setProp(
+            'backgroundColor',
+            (slot.bookedCount + 1 >= slot.capacity) ? '#f39c12' : '#28a745'
+          );
         } else {
           alert('Slot full! You are on the waitlist.');
         }
+
       } catch (err) {
         console.error(err);
         alert('Failed to book slot');
@@ -123,11 +132,3 @@ document.addEventListener('DOMContentLoaded', async function() {
   calendar.render();
 });
 </script>
-
-    <style>
-      #calendar { min-height: 600px; height: 650px; margin-top: 20px; }
-    </style>
-  </main>
-</div>
-
-<%- include('partials/footer') %>

@@ -1,7 +1,7 @@
+// routes/projects.js
 const express = require("express");
 const router = express.Router();
 const db = require("../db/postgres");
-const { loadUserFromDB } = require("../middlewares/loadUser"); // create a middleware file for loadUserFromDB
 
 /* ===============================
    AUTH MIDDLEWARE
@@ -16,8 +16,10 @@ function requireAuth(req, res, next) {
 ================================ */
 async function canEditProject(req, res, next) {
   try {
+    // Mentors can edit any project
     if (req.user.role === "mentor") return next();
 
+    // Learners can only edit their own projects
     const result = await db.query(
       `SELECT 1 FROM projects WHERE project_id = $1 AND learner_id = $2`,
       [req.params.id, req.user.userId]
@@ -34,11 +36,41 @@ async function canEditProject(req, res, next) {
 }
 
 /* ===============================
+   LOAD USER MIDDLEWARE
+================================ */
+async function loadUserFromDB(req, res, next) {
+  if (!req.user?.userId) return next();
+  try {
+    const result = await db.query(
+      `SELECT user_id, full_name, email, role, avatar
+       FROM users WHERE user_id = $1`,
+      [req.user.userId]
+    );
+
+    if (result.rows[0]) {
+      const u = result.rows[0];
+      res.locals.user = {
+        userId: u.user_id,
+        fullName: u.full_name,
+        email: u.email,
+        role: u.role,
+        avatar: u.avatar,
+      };
+    }
+    next();
+  } catch (err) {
+    console.error("Sidebar user load error:", err);
+    next();
+  }
+}
+
+/* ===============================
    LIST PROJECTS
 ================================ */
 router.get("/", requireAuth, loadUserFromDB, async (req, res) => {
   try {
     let projects;
+
     if (req.user.role === "mentor") {
       const result = await db.query(
         `SELECT p.*, 
@@ -63,7 +95,7 @@ router.get("/", requireAuth, loadUserFromDB, async (req, res) => {
     }
 
     res.render("projects", {
-      user: res.locals.user || req.user, // ensures sidebar avatar works
+      user: req.user,
       projects,
       success: req.query.success || "",
       error: req.query.error || "",
@@ -72,7 +104,7 @@ router.get("/", requireAuth, loadUserFromDB, async (req, res) => {
   } catch (err) {
     console.error("Error fetching projects:", err);
     res.render("projects", {
-      user: res.locals.user || req.user,
+      user: req.user,
       projects: [],
       success: "",
       error: "Failed to load projects",
@@ -81,7 +113,7 @@ router.get("/", requireAuth, loadUserFromDB, async (req, res) => {
 });
 
 /* ===============================
-   CREATE PROJECT
+   CREATE PROJECT (MENTOR ONLY)
 ================================ */
 router.get("/create", requireAuth, loadUserFromDB, async (req, res) => {
   if (req.user.role !== "mentor")
@@ -91,17 +123,18 @@ router.get("/create", requireAuth, loadUserFromDB, async (req, res) => {
     const tracks = await db.query(
       `SELECT track_id, track_name FROM learning_tracks ORDER BY track_name`
     );
+
     const learners = await db.query(
       `SELECT user_id, full_name FROM users WHERE role='learner' ORDER BY full_name`
     );
 
     res.render("project-create", {
-      user: res.locals.user || req.user,
+      user: req.user,
       tracks: tracks.rows,
       learners: learners.rows,
       error: req.query.error || "",
-      success: req.query.success || "",
     });
+
   } catch (err) {
     console.error(err);
     res.redirect("/projects?error=Failed to load create page");
@@ -114,9 +147,16 @@ router.post("/create", requireAuth, async (req, res) => {
 
   try {
     const {
-      name, description, start_date, end_date,
-      technology_stack, status, track_id,
-      github_link, live_link, learner_id
+      name,
+      description,
+      start_date,
+      end_date,
+      technology_stack,
+      status,
+      track_id,
+      github_link,
+      live_link,
+      learner_id,
     } = req.body;
 
     await db.query(
@@ -126,16 +166,21 @@ router.post("/create", requireAuth, async (req, res) => {
         github_link, live_link, learner_id)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
       [
-        name, description,
+        name,
+        description,
         start_date || null,
         end_date || null,
-        technology_stack, status,
-        track_id || null, github_link,
-        live_link, learner_id
+        technology_stack,
+        status,
+        track_id || null,
+        github_link,
+        live_link,
+        learner_id,
       ]
     );
 
     res.redirect("/projects?success=Project created successfully");
+
   } catch (err) {
     console.error(err);
     res.redirect("/projects/create?error=Failed to create project");
@@ -145,7 +190,7 @@ router.post("/create", requireAuth, async (req, res) => {
 /* ===============================
    EDIT PROJECT
 ================================ */
-router.get("/edit/:id", requireAuth, canEditProject, loadUserFromDB, async (req, res) => {
+router.get("/edit/:id", requireAuth, loadUserFromDB, canEditProject, async (req, res) => {
   try {
     const projectResult = await db.query(
       `SELECT * FROM projects WHERE project_id = $1`,
@@ -161,24 +206,30 @@ router.get("/edit/:id", requireAuth, canEditProject, loadUserFromDB, async (req,
     );
 
     res.render("project-edit", {
-      user: res.locals.user || req.user,
+      user: req.user,
       project,
       tracks: tracks.rows,
       error: req.query.error || "",
-      success: req.query.success || "",
     });
+
   } catch (err) {
     console.error(err);
     res.redirect("/projects?error=Failed to load edit page");
   }
 });
 
-router.post("/edit/:id", requireAuth, canEditProject, async (req, res) => {
+router.post("/edit/:id", requireAuth, loadUserFromDB, canEditProject, async (req, res) => {
   try {
     const {
-      name, description, start_date, end_date,
-      technology_stack, status, track_id,
-      github_link, live_link
+      name,
+      description,
+      start_date,
+      end_date,
+      technology_stack,
+      status,
+      track_id,
+      github_link,
+      live_link,
     } = req.body;
 
     await db.query(
@@ -195,15 +246,21 @@ router.post("/edit/:id", requireAuth, canEditProject, async (req, res) => {
            updated_at=NOW()
        WHERE project_id=$10`,
       [
-        name, description,
-        start_date || null, end_date || null,
-        technology_stack, status,
-        track_id || null, github_link, live_link,
-        req.params.id
+        name,
+        description,
+        start_date || null,
+        end_date || null,
+        technology_stack,
+        status,
+        track_id || null,
+        github_link,
+        live_link,
+        req.params.id,
       ]
     );
 
     res.redirect("/projects?success=Project updated successfully");
+
   } catch (err) {
     console.error(err);
     res.redirect(`/projects/edit/${req.params.id}?error=Failed to update project`);
@@ -211,15 +268,19 @@ router.post("/edit/:id", requireAuth, canEditProject, async (req, res) => {
 });
 
 /* ===============================
-   DELETE PROJECT
+   DELETE PROJECT (MENTOR ONLY)
 ================================ */
 router.post("/delete/:id", requireAuth, loadUserFromDB, async (req, res) => {
   if (req.user.role !== "mentor")
     return res.redirect("/projects?error=Unauthorized");
 
   try {
-    await db.query(`DELETE FROM projects WHERE project_id=$1`, [req.params.id]);
+    await db.query(`DELETE FROM projects WHERE project_id=$1`, [
+      req.params.id,
+    ]);
+
     res.redirect("/projects?success=Project deleted successfully");
+
   } catch (err) {
     console.error(err);
     res.redirect("/projects?error=Failed to delete project");
@@ -227,7 +288,8 @@ router.post("/delete/:id", requireAuth, loadUserFromDB, async (req, res) => {
 });
 
 /* ===============================
-   PROJECT DETAILS (LAST)
+   PROJECT DETAILS
+   (⚠️ MUST BE LAST)
 ================================ */
 router.get("/:id", requireAuth, loadUserFromDB, async (req, res) => {
   try {
@@ -243,14 +305,13 @@ router.get("/:id", requireAuth, loadUserFromDB, async (req, res) => {
     );
 
     const project = result.rows[0];
+
     if (!project)
       return res.redirect("/projects?error=Project not found");
 
     res.render("project-detail", {
-      user: res.locals.user || req.user,
+      user: req.user,
       project,
-      success: req.query.success || "",
-      error: req.query.error || "",
     });
 
   } catch (err) {

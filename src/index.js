@@ -143,17 +143,35 @@ app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
    COURSES
 ================================ */
 app.get("/courses", requireAuth, loadUserFromDB, async (req, res) => {
-  res.locals.pageTitle = "Courses | The Tech Lab";
-  res.locals.activePage = "courses";
+  try {
+    res.locals.pageTitle = "Courses | The Tech Lab";
+    res.locals.activePage = "courses";
 
-  const result = await db.query(
-    `SELECT * FROM courses ORDER BY created_at DESC`
-  );
+    // ✅ define toast variables so EJS doesn't crash
+    const success = req.query.success || null;
+    const error = req.query.error || null;
 
-  res.render("courses", {
-    courses: result.rows || [],
-  });
+    const result = await db.query(
+      `SELECT * FROM courses ORDER BY created_at DESC`
+    );
+
+    res.render("courses", {
+      courses: result.rows || [],
+      user: res.locals.user, // optional, if courses.ejs uses 'user'
+      success,
+      error
+    });
+  } catch (err) {
+    console.error("Courses page error:", err);
+    res.status(500).render("courses", {
+      courses: [],
+      user: res.locals.user,
+      success: null,
+      error: "Failed to load courses"
+    });
+  }
 });
+
 
 /* ===============================
    CALENDAR

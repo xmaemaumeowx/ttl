@@ -7,7 +7,12 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const db = require("./db/postgres");
+
 const projectRoutes = require("./routes/projects");
+const authRoutes = require("./routes/auth");
+const calendarRoutes = require("./routes/calendar");
+const reportsRouter = require("./routes/reports");
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -19,38 +24,38 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use("/projects", projectRoutes);
-
 
 /* ===============================
-   STATIC FILES & VIEWS
+   STATIC FILES & VIEW ENGINE
 ================================ */
 app.use(express.static(path.join(__dirname, "../public")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 /* ===============================
-   JWT DECODE (GLOBAL)
+   JWT DECODE (MUST COME BEFORE ROUTES)
 ================================ */
 app.use((req, res, next) => {
   const token = req.cookies?.token;
+
   if (token) {
     try {
       req.user = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
+    } catch (err) {
       req.user = null;
     }
   } else {
     req.user = null;
   }
+
   next();
 });
 
 /* ===============================
-   GLOBAL LAYOUT VARIABLES (FIX)
+   GLOBAL LAYOUT DEFAULTS
 ================================ */
 app.use((req, res, next) => {
-  res.locals.pageTitle = "The Tech Lab Dashboard";
+  res.locals.pageTitle = "The Tech Lab";
   res.locals.activePage = "";
   res.locals.user = null;
   next();
@@ -94,6 +99,7 @@ async function loadUserFromDB(req, res, next) {
         avatar: u.avatar,
       };
     }
+
     next();
   } catch (err) {
     console.error("Sidebar user load error:", err);
@@ -104,7 +110,6 @@ async function loadUserFromDB(req, res, next) {
 /* ===============================
    AUTH ROUTES
 ================================ */
-const authRoutes = require("./routes/auth");
 app.use("/", authRoutes);
 
 /* ===============================
@@ -134,20 +139,12 @@ app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
   });
 });
 
-
-
-
 /* ===============================
    COURSES
 ================================ */
-
 app.get("/courses", requireAuth, loadUserFromDB, async (req, res) => {
   res.locals.pageTitle = "Courses | The Tech Lab";
   res.locals.activePage = "courses";
-
-  // ✅ define toast defaults
-  res.locals.success = null;
-  res.locals.error = null;
 
   const result = await db.query(
     `SELECT * FROM courses ORDER BY created_at DESC`
@@ -167,42 +164,18 @@ app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
   res.render("calendar");
 });
 
-const calendarRoutes = require('./routes/calendar');
-app.use('/calendar', calendarRoutes);
-
+app.use("/calendar", calendarRoutes);
 
 /* ===============================
-  REPORTS
-================================ 
+   PROJECT ROUTES
+   (MUST COME AFTER JWT + HELPERS)
+================================ */
+app.use("/projects", projectRoutes);
 
-app.get("/reports", requireAuth, loadUserFromDB, async (req, res) => {
-  res.locals.pageTitle = "Reports | The Tech Lab";
-  res.locals.activePage = "reports";
-
-  const learnerId = req.user.userId; // ✅ define this
-
-  const result = await db.query(
-    `SELECT DISTINCT
-        lt.track_name,
-        COUNT(p.project_id) AS total_projects,
-        COUNT(CASE WHEN p.status = 'Completed' THEN 1 END) AS completed_projects
-      FROM learning_tracks lt
-      LEFT JOIN projects p 
-        ON p.track_id = lt.track_id 
-        AND p.learner_id = $1
-      GROUP BY lt.track_name
-      ORDER BY lt.track_name ASC`,
-    [learnerId]
-  );
-
-  res.render("reports", {
-    reports: result.rows || [],
-  });
-});*/
-const reportsRouter = require('./routes/reports');
-app.use('/reports', reportsRouter);
-
-
+/* ===============================
+   REPORT ROUTES
+================================ */
+app.use("/reports", reportsRouter);
 
 /* ===============================
    LEARNERS (MENTOR)
@@ -220,14 +193,13 @@ app.get("/learners", requireAuth, requireMentor, loadUserFromDB, async (req, res
   res.render("learners", { learners: result.rows });
 });
 
-
-
 /* ===============================
    SETTINGS
 ================================ */
 app.get("/settings", requireAuth, loadUserFromDB, (req, res) => {
   res.locals.pageTitle = "Settings | The Tech Lab";
   res.locals.activePage = "settings";
+
   res.render("settings", {
     successMessage: req.query.success || "",
     errorMessage: req.query.error || "",
@@ -235,7 +207,7 @@ app.get("/settings", requireAuth, loadUserFromDB, (req, res) => {
 });
 
 /* ===============================
-   AVATAR UPLOAD (CLOUDINARY)
+   AVATAR UPLOAD
 ================================ */
 const cloudinaryStorage = require("./config/cloudinaryStorage");
 const upload = multer({ storage: cloudinaryStorage });
@@ -278,10 +250,15 @@ app.post("/profile/password", requireAuth, async (req, res) => {
     [req.user.userId]
   );
 
-  const valid = await bcrypt.compare(currentPassword, result.rows[0].password_hash);
+  const valid = await bcrypt.compare(
+    currentPassword,
+    result.rows[0].password_hash
+  );
+
   if (!valid) return res.redirect("/settings?error=Wrong password");
 
   const hashed = await bcrypt.hash(newPassword, 10);
+
   await db.query(
     `UPDATE users SET password_hash=$1 WHERE user_id=$2`,
     [hashed, req.user.userId]

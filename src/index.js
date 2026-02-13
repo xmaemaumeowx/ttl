@@ -7,11 +7,11 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const db = require("./db/postgres");
-
 const projectRoutes = require("./routes/projects");
 const authRoutes = require("./routes/auth");
 const calendarRoutes = require("./routes/calendar");
 const reportsRouter = require("./routes/reports");
+const cloudinaryStorage = require("./config/cloudinaryStorage");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -26,62 +26,34 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 /* ===============================
-   STATIC FILES & VIEW ENGINE
+   STATIC FILES & VIEWS
 ================================ */
 app.use(express.static(path.join(__dirname, "../public")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 /* ===============================
-   JWT DECODE (MUST COME BEFORE ROUTES)
+   JWT DECODE (GLOBAL)
 ================================ */
 app.use((req, res, next) => {
   const token = req.cookies?.token;
-
   if (token) {
     try {
       req.user = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
+    } catch {
       req.user = null;
     }
   } else {
     req.user = null;
   }
-
   next();
 });
 
 /* ===============================
-   GLOBAL LAYOUT DEFAULTS
-================================ */
-app.use((req, res, next) => {
-  res.locals.pageTitle = "The Tech Lab";
-  res.locals.activePage = "";
-  res.locals.user = null;
-  next();
-});
-
-/* ===============================
-   AUTH HELPERS
-================================ */
-function requireAuth(req, res, next) {
-  if (!req.user) return res.redirect("/login");
-  next();
-}
-
-function requireMentor(req, res, next) {
-  if (req.user?.role !== "mentor") {
-    return res.redirect("/dashboard");
-  }
-  next();
-}
-
-/* ===============================
-   LOAD USER FOR SIDEBAR / AVATAR
+   LOAD USER FROM DB (FOR AVATAR & ROLE)
 ================================ */
 async function loadUserFromDB(req, res, next) {
   if (!req.user?.userId) return next();
-
   try {
     const result = await db.query(
       `SELECT user_id, full_name, email, role, avatar
@@ -99,7 +71,6 @@ async function loadUserFromDB(req, res, next) {
         avatar: u.avatar,
       };
     }
-
     next();
   } catch (err) {
     console.error("Sidebar user load error:", err);
@@ -108,9 +79,36 @@ async function loadUserFromDB(req, res, next) {
 }
 
 /* ===============================
+   GLOBAL LAYOUT VARIABLES
+================================ */
+app.use((req, res, next) => {
+  res.locals.pageTitle = "The Tech Lab Dashboard";
+  res.locals.activePage = "";
+  next();
+});
+
+/* ===============================
+   AUTH HELPERS
+================================ */
+function requireAuth(req, res, next) {
+  if (!req.user) return res.redirect("/login");
+  next();
+}
+
+function requireMentor(req, res, next) {
+  if (req.user?.role !== "mentor") return res.redirect("/dashboard");
+  next();
+}
+
+/* ===============================
    AUTH ROUTES
 ================================ */
 app.use("/", authRoutes);
+
+/* ===============================
+   PROJECTS ROUTES
+================================ */
+app.use("/projects", loadUserFromDB, projectRoutes);
 
 /* ===============================
    CORE PAGES
@@ -142,58 +140,18 @@ app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
 /* ===============================
    COURSES
 ================================ */
-app.get("/courses", requireAuth, loadUserFromDB, async (req, res) => {
-  try {
-    res.locals.pageTitle = "Courses | The Tech Lab";
-    res.locals.activePage = "courses";
-
-    // ✅ define toast variables so EJS doesn't crash
-    const success = req.query.success || null;
-    const error = req.query.error || null;
-
-    const result = await db.query(
-      `SELECT * FROM courses ORDER BY created_at DESC`
-    );
-
-    res.render("courses", {
-      courses: result.rows || [],
-      user: res.locals.user, // optional, if courses.ejs uses 'user'
-      success,
-      error
-    });
-  } catch (err) {
-    console.error("Courses page error:", err);
-    res.status(500).render("courses", {
-      courses: [],
-      user: res.locals.user,
-      success: null,
-      error: "Failed to load courses"
-    });
-  }
-});
-
+const coursesRouter = require("./routes/courses");
+app.use("/courses", loadUserFromDB, coursesRouter);
 
 /* ===============================
    CALENDAR
 ================================ */
-app.get("/calendar", requireAuth, loadUserFromDB, (req, res) => {
-  res.locals.pageTitle = "Calendar | The Tech Lab";
-  res.locals.activePage = "calendar";
-  res.render("calendar");
-});
-
-app.use("/calendar", calendarRoutes);
+app.use("/calendar", loadUserFromDB, calendarRoutes);
 
 /* ===============================
-   PROJECT ROUTES
-   (MUST COME AFTER JWT + HELPERS)
+   REPORTS
 ================================ */
-app.use("/projects", projectRoutes);
-
-/* ===============================
-   REPORT ROUTES
-================================ */
-app.use("/reports", reportsRouter);
+app.use("/reports", loadUserFromDB, reportsRouter);
 
 /* ===============================
    LEARNERS (MENTOR)
@@ -217,7 +175,6 @@ app.get("/learners", requireAuth, requireMentor, loadUserFromDB, async (req, res
 app.get("/settings", requireAuth, loadUserFromDB, (req, res) => {
   res.locals.pageTitle = "Settings | The Tech Lab";
   res.locals.activePage = "settings";
-
   res.render("settings", {
     successMessage: req.query.success || "",
     errorMessage: req.query.error || "",
@@ -225,15 +182,11 @@ app.get("/settings", requireAuth, loadUserFromDB, (req, res) => {
 });
 
 /* ===============================
-   AVATAR UPLOAD
+   AVATAR UPLOAD (CLOUDINARY)
 ================================ */
-const cloudinaryStorage = require("./config/cloudinaryStorage");
 const upload = multer({ storage: cloudinaryStorage });
-
-app.post("/profile/avatar", requireAuth, upload.single("avatar"), async (req, res) => {
-  if (!req.file?.path) {
-    return res.redirect("/settings?error=Upload failed");
-  }
+app.post("/profile/avatar", requireAuth, loadUserFromDB, upload.single("avatar"), async (req, res) => {
+  if (!req.file?.path) return res.redirect("/settings?error=Upload failed");
 
   await db.query(
     `UPDATE users SET avatar=$1 WHERE user_id=$2`,
@@ -246,7 +199,7 @@ app.post("/profile/avatar", requireAuth, upload.single("avatar"), async (req, re
 /* ===============================
    PROFILE UPDATE
 ================================ */
-app.post("/profile/update", requireAuth, async (req, res) => {
+app.post("/profile/update", requireAuth, loadUserFromDB, async (req, res) => {
   const { fullName, email } = req.body;
 
   await db.query(
@@ -260,7 +213,7 @@ app.post("/profile/update", requireAuth, async (req, res) => {
 /* ===============================
    PASSWORD CHANGE
 ================================ */
-app.post("/profile/password", requireAuth, async (req, res) => {
+app.post("/profile/password", requireAuth, loadUserFromDB, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   const result = await db.query(
@@ -268,15 +221,10 @@ app.post("/profile/password", requireAuth, async (req, res) => {
     [req.user.userId]
   );
 
-  const valid = await bcrypt.compare(
-    currentPassword,
-    result.rows[0].password_hash
-  );
-
+  const valid = await bcrypt.compare(currentPassword, result.rows[0].password_hash);
   if (!valid) return res.redirect("/settings?error=Wrong password");
 
   const hashed = await bcrypt.hash(newPassword, 10);
-
   await db.query(
     `UPDATE users SET password_hash=$1 WHERE user_id=$2`,
     [hashed, req.user.userId]

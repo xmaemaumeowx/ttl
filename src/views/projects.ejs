@@ -1,24 +1,38 @@
 <%- include('partials/header', { pageTitle: "Projects | The Tech Lab" }) %>
 <%- include('partials/navbar') %>
+
 <div class="dashboard">
-  <%- include('partials/sidebar', { activePage: 'projects', user: locals.user }) %>
+  <!-- Sidebar: ensure user is always defined with default avatar -->
+  <%- include('partials/sidebar', { 
+        activePage: 'projects', 
+        user: locals.user || { 
+          fullName: 'Guest', 
+          role: 'guest', 
+          avatar: '/images/default-avatar.png' 
+        } 
+      }) %>
 
   <main class="dashboard-main-content">
     <h1 class="page-title">My Projects</h1>
 
     <!-- Toast messages -->
-    <% if (success) { %>
+    <% if (typeof success !== 'undefined' && success) { %>
       <div class="toast success"><%= success %></div>
     <% } %>
-    <% if (error) { %>
+    <% if (typeof error !== 'undefined' && error) { %>
       <div class="toast error"><%= error %></div>
     <% } %>
 
     <% if (!projects || projects.length === 0) { %>
       <p class="no-data">No projects found.</p>
     <% } else { %>
-      
-      <% if (user.role === 'mentor') { %>
+
+      <% 
+        // Safe user object for templates
+        const safeUser = locals.user || { role: 'guest', avatar: '/images/default-avatar.png' }; 
+      %>
+
+      <% if (safeUser.role === 'mentor') { %>
         <!-- ===== Mentor Table View ===== -->
         <div style="overflow-x:auto;">
           <table class="projects-table">
@@ -114,4 +128,3 @@
 </div>
 
 <%- include('partials/footer') %>
-

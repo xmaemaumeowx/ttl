@@ -6,9 +6,8 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
-
 const db = require("./db/postgres");
-
+const projectRoutes = require("./routes/projects");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -20,6 +19,8 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use("/projects", projectRoutes);
+
 
 /* ===============================
    STATIC FILES & VIEWS
@@ -133,26 +134,8 @@ app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
   });
 });
 
-/* ===============================
-   PROJECTS
-================================ */
 
-app.get("/projects", requireAuth, loadUserFromDB, async (req, res) => {
-  res.locals.pageTitle = "Projects | The Tech Lab";
-  res.locals.activePage = "projects";
 
-  // ✅ define toast defaults
-  res.locals.success = null;
-  res.locals.error = null;
-
-  const result = await db.query(
-    `SELECT * FROM projects ORDER BY created_at DESC`
-  );
-
-  res.render("projects", {
-    projects: result.rows || [],
-  });
-});
 
 /* ===============================
    COURSES

@@ -1,101 +1,65 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const db = require("../db/postgres");
+const db = require('../db'); // adjust path to your db connection
+const { requireAuth } = require('../middleware/auth'); // adjust path
 
-/* ===============================
-   AUTH MIDDLEWARE
-================================ */
-
-function requireAuth(req, res, next) {
-  if (!req.user) return res.redirect("/login");
-  next();
-}
-
-async function loadUserFromDB(req, res, next) {
-  if (!req.user?.userId) return next();
-
+// Reports route: role-based
+router.get('/reports', requireAuth, async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT user_id, full_name, email, role, avatar
-       FROM users
-       WHERE user_id = $1`,
-      [req.user.userId]
-    );
+    if (req.user.role === 'mentor') {
+      // Render mentor report
+      const mentorId = req.user.user_id;
 
-    if (result.rows[0]) {
-      const u = result.rows[0];
-      res.locals.user = {
-        userId: u.user_id,
-        fullName: u.full_name,
-        email: u.email,
-        role: u.role,
-        avatar: u.avatar,
-      };
-    }
+      const result = await db.query(`
+        SELECT 
+          lt.track_name,
+          COUNT(e.user_id) AS enrolled_count
+        FROM learning_tracks lt
+        LEFT JOIN enrollments e ON lt.track_id = e.track_id
+        WHERE lt.mentor_id = $1
+        GROUP BY lt.track_name
+        ORDER BY lt.track_name
+      `, [mentorId]);
 
-    next();
-  } catch (err) {
-    console.error("User load error:", err);
-    next();
-  }
-}
+      return res.render('mentor-report', {
+        mentorReport: result.rows,
+        pageTitle: 'Mentor Report',
+        activePage: 'reports' // keeps sidebar highlighting
+      });
+    } 
 
-/* ===============================
-   GET REPORTS
-================================ */
+    // Default: learner report
+    const learnerId = req.user.user_id;
 
-router.get("/", requireAuth, loadUserFromDB, async (req, res) => {
-  try {
-    res.locals.pageTitle = "Reports | The Tech Lab";
-    res.locals.activePage = "reports";
-
-    const learnerId = req.user.userId;
-
-    const result = await db.query(
-      `
-      SELECT
+    const result = await db.query(`
+      SELECT 
         lt.track_name,
+        COALESCE(SUM(CASE WHEN p.completed THEN 1 ELSE 0 END),0) * 100.0 / 
+        GREATEST(COUNT(p.project_id),1) AS progress,
+        COALESCE(SUM(CASE WHEN p.completed THEN 1 ELSE 0 END),0) AS completed_projects,
         COUNT(p.project_id) AS total_projects,
-        COUNT(CASE WHEN p.status = 'Completed' THEN 1 END) AS completed_projects
-      FROM learning_tracks lt
-      LEFT JOIN projects p
-        ON p.track_id = lt.track_id
-        AND p.learner_id = $1
+        CASE
+          WHEN COUNT(p.project_id) = 0 THEN 'Not Started'
+          WHEN SUM(CASE WHEN p.completed THEN 1 ELSE 0 END) = COUNT(p.project_id) THEN 'Completed'
+          ELSE 'In Progress'
+        END AS status
+      FROM enrollments e
+      JOIN learning_tracks lt ON e.track_id = lt.track_id
+      LEFT JOIN projects p ON lt.track_id = p.track_id
+      WHERE e.user_id = $1
       GROUP BY lt.track_name
-      ORDER BY lt.track_name ASC
-      `,
-      [learnerId]
-    );
+      ORDER BY lt.track_name;
+    `, [learnerId]);
 
-    const reports = result.rows.map(track => {
-      const total = parseInt(track.total_projects) || 0;
-      const completed = parseInt(track.completed_projects) || 0;
-
-      let progress = 0;
-      if (total > 0) {
-        progress = Math.round((completed / total) * 100);
-      }
-
-      let status = "Not Started";
-      if (progress === 100 && total > 0) status = "Completed";
-      else if (progress > 0) status = "In Progress";
-
-      return {
-        track_name: track.track_name,
-        total_projects: total,
-        completed_projects: completed,
-        progress,
-        status
-      };
-    });
-
-    res.render("reports", {
-      reports
+    res.render('reports', {
+      reports: result.rows,
+      pageTitle: 'Reports',
+      activePage: 'reports'
     });
 
   } catch (err) {
-    console.error("Reports error:", err);
-    res.render("reports", { reports: [] });
+    console.error(err);
+    res.status(500).send('Server Error');
   }
 });
 

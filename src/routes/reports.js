@@ -1,15 +1,7 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../db'); // adjust path to your db connection
-const { requireAuth } = require('../middleware/auth'); // adjust path
-
-// Reports route: role-based
 router.get('/reports', requireAuth, async (req, res) => {
   try {
     if (req.user.role === 'mentor') {
-      // Render mentor report
-      const mentorId = req.user.user_id;
-
+      // Mentor view
       const result = await db.query(`
         SELECT 
           lt.track_name,
@@ -19,18 +11,16 @@ router.get('/reports', requireAuth, async (req, res) => {
         WHERE lt.mentor_id = $1
         GROUP BY lt.track_name
         ORDER BY lt.track_name
-      `, [mentorId]);
+      `, [req.user.user_id]);
 
       return res.render('mentor-report', {
         mentorReport: result.rows,
         pageTitle: 'Mentor Report',
-        activePage: 'reports' // keeps sidebar highlighting
+        activePage: 'reports'
       });
-    } 
+    }
 
-    // Default: learner report
-    const learnerId = req.user.user_id;
-
+    // Learner view
     const result = await db.query(`
       SELECT 
         lt.track_name,
@@ -49,7 +39,7 @@ router.get('/reports', requireAuth, async (req, res) => {
       WHERE e.user_id = $1
       GROUP BY lt.track_name
       ORDER BY lt.track_name;
-    `, [learnerId]);
+    `, [req.user.user_id]);
 
     res.render('reports', {
       reports: result.rows,
@@ -62,5 +52,3 @@ router.get('/reports', requireAuth, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
-module.exports = router;

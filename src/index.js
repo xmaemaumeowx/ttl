@@ -154,7 +154,6 @@ app.use("/calendar", loadUserFromDB, calendarRouter);
 /* ===============================
    REPORTS
 ================================ */
-const reportsRouter = require('./routes/reports'); // adjust path if needed
 app.use('/', reportsRouter);
 
 

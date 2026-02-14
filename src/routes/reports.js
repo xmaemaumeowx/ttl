@@ -1,13 +1,12 @@
 const express = require('express');
-const router = express.Router(); // <-- THIS was missing
-const db = require('../db'); // adjust path to your database connection
-const { requireAuth } = require('../middleware/auth'); // adjust path to your auth middleware
+const router = express.Router();
+const db = require('../db'); // adjust to your db connection
+const { requireAuth } = require('../middleware/auth'); // adjust path
 
-// Route for reports (handles both learners and mentors)
+// GET /reports - handles both learner and mentor
 router.get('/reports', requireAuth, async (req, res) => {
   try {
     if (req.user.role === 'mentor') {
-      // Mentor report
       const result = await db.query(`
         SELECT 
           lt.track_name,
@@ -26,7 +25,7 @@ router.get('/reports', requireAuth, async (req, res) => {
       });
     }
 
-    // Learner report
+    // Learner view
     const result = await db.query(`
       SELECT 
         lt.track_name,

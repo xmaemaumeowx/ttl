@@ -1,7 +1,22 @@
-<!-- FullCalendar CSS -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+<%- include('partials/header', { pageTitle: "Learner Calendar | The Tech Lab" }) %>
+<%- include('partials/navbar') %>
 
-<!-- FullCalendar JS -->
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'calendar', user: user }) %>
+
+  <main class="dashboard-main-content">
+    <h1 class="page-title">📅 Learner Calendar</h1>
+    <p>View and book available mentor slots below.</p>
+
+    <!-- TTL Calendar Container -->
+    <div id="calendar" class="ttl-calendar"></div>
+  </main>
+</div>
+
+<%- include('partials/footer') %>
+
+<!-- FullCalendar CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
 <script>
@@ -9,46 +24,55 @@ document.addEventListener('DOMContentLoaded', async function() {
   const calendarEl = document.getElementById('calendar');
   if (!calendarEl) return;
 
-  // SAFE USER VALUES
   const currentUserRole = "<%= user?.role || '' %>";
-  const currentUserName = "<%= user?.fullName || '' %>";
+  const currentUserName = "<%= user?.full_name || '' %>";
 
+  // Fetch slots from backend
   async function fetchSlots() {
-    const res = await fetch('/calendar/slots');
-    const data = await res.json();
+    try {
+      const res = await fetch('/calendar/slots');
+      const data = await res.json();
 
-    return data.map(slot => ({
-      id: slot.slot_id,
-      title: `${slot.mentor_name} (${slot.booked_count}/${slot.capacity})`,
-      start: slot.start_time,
-      end: slot.end_time,
-      extendedProps: { 
-        slotId: slot.slot_id,
-        capacity: slot.capacity,
-        bookedCount: slot.booked_count
-      },
-      backgroundColor: slot.booked_count >= slot.capacity ? '#f39c12' : '#28a745',
-      borderColor: '#000',
-      textColor: '#fff'
-    }));
+      if (!data || !Array.isArray(data) || data.length === 0) return [];
+
+      return data.map(slot => ({
+        id: slot.slot_id,
+        title: `${slot.mentor_name} (${slot.booked_count}/${slot.capacity})`,
+        start: slot.start_time,
+        end: slot.end_time,
+        extendedProps: {
+          slotId: slot.slot_id,
+          capacity: slot.capacity,
+          bookedCount: slot.booked_count
+        },
+        backgroundColor: slot.booked_count >= slot.capacity ? '#f39c12' : '#28a745',
+        borderColor: '#000',
+        textColor: '#fff'
+      }));
+    } catch (err) {
+      console.error('Failed to fetch slots:', err);
+      return [];
+    }
   }
 
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     selectable: true,
     editable: false,
+    navLinks: true,
+    dayMaxEvents: true,
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
     },
     events: await fetchSlots(),
+    noEventsContent: 'No slots available yet.', // TTL fallback message
 
     // ===============================
     // Mentor Creates Slot
     // ===============================
     select: async function(info) {
-
       if (currentUserRole !== 'mentor') return;
 
       const capacity = prompt('Enter capacity (default 1):') || 1;
@@ -71,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           title: `${currentUserName} (0/${newSlot.capacity})`,
           start: newSlot.start_time,
           end: newSlot.end_time,
-          extendedProps: { 
+          extendedProps: {
             slotId: newSlot.slot_id,
             capacity: newSlot.capacity,
             bookedCount: 0
@@ -116,18 +140,22 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (booking.status === 'confirmed') {
           alert('Slot booked successfully!');
+
+          // Update event title and color
+          const newBookedCount = slot.bookedCount + 1;
           info.event.setProp(
             'title',
-            `${info.event.title.split('(')[0]}(${slot.bookedCount + 1}/${slot.capacity})`
+            `${info.event.title.split('(')[0]}(${newBookedCount}/${slot.capacity})`
           );
           info.event.setProp(
             'backgroundColor',
-            (slot.bookedCount + 1 >= slot.capacity) ? '#f39c12' : '#28a745'
+            newBookedCount >= slot.capacity ? '#f39c12' : '#28a745'
           );
+
+          slot.bookedCount = newBookedCount; // update extendedProps
         } else {
           alert('Slot full! You are on the waitlist.');
         }
-
       } catch (err) {
         console.error(err);
         alert('Failed to book slot');
@@ -138,3 +166,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   calendar.render();
 });
 </script>
+
+<style>
+/* TTL-style calendar container */
+.ttl-calendar {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+</style>

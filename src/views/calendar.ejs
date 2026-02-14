@@ -6,7 +6,11 @@
 
   <main class="dashboard-main-content">
     <h1 class="page-title">📅 Learner Calendar</h1>
-    <p>View and book available mentor slots below.</p>
+      <% if (user?.role === 'mentor') { %>
+        <p>Add your available mentor slots below.</p>
+      <% } else { %>
+        <p>View and book available mentor slots below.</p>
+      <% } %>
 
     <!-- TTL Calendar Container -->
     <div id="calendar" class="ttl-calendar"></div>

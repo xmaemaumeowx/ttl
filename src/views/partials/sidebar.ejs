@@ -21,10 +21,14 @@
         <a href="/calendar"><i class="fa fa-calendar-alt"></i> Calendar</a>
       </li>
 
+      <!-- Reports: role-based redirect -->
       <li class="<%= activePage === 'reports' ? 'active' : '' %>">
-        <a href="/reports"><i class="fa fa-chart-bar"></i> Reports</a>
+        <a href="<%= user.role === 'learner' ? '/reports' : '/mentor/report' %>">
+          <i class="fa fa-chart-bar"></i> Reports
+        </a>
       </li>
-      <!-- Only show Reports if NOT learner -->
+
+      <!-- Only show Learners page if NOT learner -->
       <% if (user.role !== 'learner') { %>
       <li class="<%= activePage === 'learners' ? 'active' : '' %>">
         <a href="/learners"><i class="fa fa-graduation-cap"></i> Learners</a>

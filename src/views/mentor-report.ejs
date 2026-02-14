@@ -1,0 +1,45 @@
+<%- include('partials/header', { pageTitle: "Mentor Report | The Tech Lab" }) %>
+<%- include('partials/navbar') %>
+
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'mentor-report' }) %>
+
+  <main class="dashboard-main-content">
+    <h1 class="page-title">📊 Mentor Report</h1>
+    <p class="text-muted">Your tracks and enrolled learners overview</p>
+
+    <% if (!mentorReport || mentorReport.length === 0) { %>
+      <div class="empty-state">
+        <h4>No learners enrolled yet</h4>
+        <p>Once learners start enrolling in your tracks, you will see the summary here.</p>
+      </div>
+    <% } else { %>
+
+      <div style="overflow-x:auto;">
+        <table class="projects-table">
+          <thead>
+            <tr>
+              <th>Learning Track</th>
+              <th>Number of Enrolled Learners</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% mentorReport.forEach(track => { %>
+              <tr>
+                <td><%= track.track_name %></td>
+                <td>
+                  <span class="badge ttl-badge">
+                    <%= track.enrolled_count %>
+                  </span>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+    <% } %>
+  </main>
+</div>
+
+<%- include('partials/footer') %>

@@ -142,7 +142,7 @@ app.get("/dashboard", requireAuth, loadUserFromDB, async (req, res) => {
    COURSES
 ================================ */
 const coursesRouter = require("./routes/courses");
-app.use("/courses", loadUserFromDB, coursesRouter);
+app.use("/", loadUserFromDB, coursesRouter);
 
 /* ===============================
    CALENDAR ROUTES

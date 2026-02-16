@@ -3,7 +3,7 @@
 <%- include('partials/navbar') %>
 
 <div class="dashboard">
-  <%- include('partials/sidebar', { activePage: 'courses' }) %>
+  <%- include('partials/sidebar', { activePage: 'courses',user: locals.user }) %>
 
   <main class="dashboard-main-content">
     <h1 class="page-title">📚 My Courses</h1>

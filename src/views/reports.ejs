@@ -2,14 +2,7 @@
 <%- include('partials/navbar') %>
 
 <div class="dashboard">
-    <%- include('partials/sidebar', { 
-        activePage: 'reports', 
-        user: locals.user || { 
-          fullName: 'Guest', 
-          role: 'guest', 
-          avatar: '/images/default-avatar.png' 
-        } 
-      }) %>
+  <%- include('partials/sidebar', { activePage: 'reports' }) %>
 
   <main class="dashboard-main-content">
     <h1 class="page-title">📊 Learning Reports</h1>

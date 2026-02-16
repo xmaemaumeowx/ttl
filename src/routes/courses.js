@@ -1,67 +1,64 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const db = require("../db/postgres");
+const db = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
-// Auth Middleware
-function requireAuth(req, res, next) {
-  if (!req.user) return res.redirect("/login");
-  next();
-}
-
-// GET All Courses
-router.get("/", requireAuth, async (req, res) => {
+// GET /courses
+router.get('/courses', requireAuth, async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT C.*, E.* FROM COURSES C
-        JOIN ENROLLMENTS E
-          ON C.TRACK_ID = E.TRACK_ID`
-    );
 
-    res.render("courses", {
-      pageTitle: "Courses | The Tech Lab",
-      activePage: "courses",
-      courses: result.rows || [],
-      user: req.user,                       // ✅ FIXED
-      success: req.query.success || "",     // ✅ FIXED
-      error: req.query.error || "",         // ✅ FIXED
-    });
+    // ===============================
+    // MENTOR VIEW
+    // ===============================
+    if (req.user.role === 'mentor') {
 
-  } catch (err) {
-    console.error("Courses Load Error:", err);
+      const result = await db.query(`
+        SELECT 
+          lt.track_name,
+          c.course_name,
+          c.description,
+          c.order_no
+        FROM courses c
+        JOIN learning_tracks lt 
+          ON c.track_id = lt.track_id
+        WHERE lt.mentor_id = $1
+        ORDER BY lt.track_name, c.order_no;
+      `, [req.user.user_id]);
 
-    res.render("courses", {
-      pageTitle: "Courses | The Tech Lab",
-      activePage: "courses",
-      courses: [],
-      user: req.user,
-      success: "",
-      error: "Failed to load courses.",
-    });
-  }
-});
-
-// GET Single Course
-router.get("/:id", requireAuth, async (req, res) => {
-  try {
-    const result = await db.query(
-      `SELECT * FROM courses WHERE course_id=$1`,
-      [req.params.id]
-    );
-
-    if (!result.rows[0]) {
-      return res.redirect("/courses?error=Course not found");
+      return res.render('courses', {
+        courses: result.rows,
+        user: req.user,
+        activePage: 'courses'
+      });
     }
 
-    res.render("course-detail", {
-      pageTitle: "Course Details | The Tech Lab",
-      activePage: "courses",
-      course: result.rows[0],
-      user: req.user,    // ✅ ensure sidebar works
+    // ===============================
+    // LEARNER VIEW
+    // ===============================
+    const result = await db.query(`
+      SELECT 
+        lt.track_name,
+        c.course_name,
+        c.description,
+        c.order_no
+      FROM enrollments e
+      JOIN learning_tracks lt 
+        ON e.track_id = lt.track_id
+      JOIN courses c 
+        ON lt.track_id = c.track_id
+      WHERE e.user_id = $1
+      ORDER BY lt.track_name, c.order_no;
+    `, [req.user.user_id]);
+
+    res.render('courses', {
+      courses: result.rows,
+      user: req.user,
+      activePage: 'courses'
     });
 
   } catch (err) {
-    console.error("Course Detail Error:", err);
-    res.redirect("/courses?error=Something went wrong");
+    console.error("Courses error:", err);
+    res.status(500).send("Server Error");
   }
 });
 

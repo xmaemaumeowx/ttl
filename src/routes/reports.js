@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db'); // adjust to your db connection
-const { requireAuth } = require('../middleware/auth'); // adjust path
+const db = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
-// GET /reports - handles both learner and mentor
 router.get('/reports', requireAuth, async (req, res) => {
   try {
+    console.log("Logged in user:", req.user);
+
+    // MENTOR VIEW
     if (req.user.role === 'mentor') {
+
       const result = await db.query(`
         SELECT 
           lt.track_name,
@@ -18,26 +21,38 @@ router.get('/reports', requireAuth, async (req, res) => {
         ORDER BY lt.track_name
       `, [req.user.user_id]);
 
+      console.log("Mentor rows:", result.rows);
+
       return res.render('mentor-report', {
         mentorReport: result.rows,
-        pageTitle: 'Mentor Report',
-        activePage: 'reports'
+        activePage: 'reports',
+        user: req.user
       });
     }
 
-    // Learner view
+    // LEARNER VIEW
     const result = await db.query(`
       SELECT 
         lt.track_name,
-        COALESCE(SUM(CASE WHEN p.completed THEN 1 ELSE 0 END),0) * 100.0 / 
-        GREATEST(COUNT(p.project_id),1) AS progress,
-        COALESCE(SUM(CASE WHEN p.completed THEN 1 ELSE 0 END),0) AS completed_projects,
+
+        ROUND(
+          COALESCE(SUM(CASE WHEN p.status = 'Completed' THEN 1 ELSE 0 END),0) 
+          * 100.0 / 
+          GREATEST(COUNT(p.project_id),1)
+        ) AS progress,
+
+        COALESCE(SUM(CASE WHEN p.status = 'Completed' THEN 1 ELSE 0 END),0) 
+          AS completed_projects,
+
         COUNT(p.project_id) AS total_projects,
+
         CASE
           WHEN COUNT(p.project_id) = 0 THEN 'Not Started'
-          WHEN SUM(CASE WHEN p.completed THEN 1 ELSE 0 END) = COUNT(p.project_id) THEN 'Completed'
+          WHEN SUM(CASE WHEN p.status = 'Completed' THEN 1 ELSE 0 END) = COUNT(p.project_id)
+               THEN 'Completed'
           ELSE 'In Progress'
         END AS status
+
       FROM enrollments e
       JOIN learning_tracks lt ON e.track_id = lt.track_id
       LEFT JOIN projects p ON lt.track_id = p.track_id
@@ -48,12 +63,12 @@ router.get('/reports', requireAuth, async (req, res) => {
 
     res.render('reports', {
       reports: result.rows,
-      pageTitle: 'Reports',
-      activePage: 'reports'
+      activePage: 'reports',
+      user: req.user
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Reports error:", err);
     res.status(500).send('Server Error');
   }
 });

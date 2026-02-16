@@ -12,7 +12,9 @@ function requireAuth(req, res, next) {
 router.get("/", requireAuth, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT * FROM courses ORDER BY course_name`
+      `SELECT C.*, E.* FROM COURSES C
+        JOIN ENROLLMENTS E
+          ON C.TRACK_ID = E.TRACK_ID`
     );
 
     res.render("courses", {

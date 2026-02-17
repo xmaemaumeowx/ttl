@@ -2,70 +2,106 @@
 <%- include('partials/navbar') %>
 
 <%
-  // Always define these before any usage (prevents "safeCourses is not defined")
-  const safeUser = locals.user || user || {
+  const safeUser = locals.user || {
     fullName: 'Guest',
     role: 'guest',
-    avatar: ''
+    avatar: '/images/default-avatar.png'
   };
 
   const safeCourses = Array.isArray(courses) ? courses : [];
 %>
 
 <div class="dashboard">
-  <%- include('partials/sidebar', { activePage: 'courses', user: safeUser }) %>
+
+  <%- include('partials/sidebar', { 
+        activePage: 'courses',
+        user: safeUser
+      }) %>
 
   <main class="dashboard-main-content">
-    <h1 class="page-title">📚 My Courses</h1>
+    <h1 class="page-title">My Courses</h1>
 
+    <!-- Toast Messages -->
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div class="toast success"><%= success %></div>
+    <% } %>
     <% if (typeof error !== 'undefined' && error) { %>
       <div class="toast error"><%= error %></div>
     <% } %>
 
     <% if (safeCourses.length === 0) { %>
-      <div class="empty-state">
-        <h4>No courses available</h4>
-        <% if (safeUser.role === 'mentor') { %>
-          <p>You are not yet assigned to any learning track.</p>
-        <% } else { %>
-          <p>You are not enrolled in any learning track yet.</p>
-        <% } %>
-      </div>
+      <p class="no-data">No courses found.</p>
     <% } else { %>
 
-      <%
-        let currentTrack = null;
-      %>
+      <% if (safeUser.role === 'mentor') { %>
 
-      <% safeCourses.forEach((course, idx) => { %>
-        <% if (currentTrack !== course.track_name) { %>
-          <% if (currentTrack !== null) { %>
-            </div>
-          <% } %>
+        <!-- ===== Mentor Table View ===== -->
+        <div style="overflow-x:auto;">
+          <table class="projects-table">
+            <thead>
+              <tr>
+                <th>Track</th>
+                <th>Module</th>
+                <th>Order</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% safeCourses.forEach(course => { %>
+                <tr>
+                  <td><%= course.track_name %></td>
+                  <td><%= course.course_name %></td>
+                  <td><%= course.order_no %></td>
+                  <td><%= course.description || '' %></td>
+                  <td>
+                    <a href="/courses/edit/<%= course.course_id %>" class="edit-btn">Edit</a>
+                    <form action="/courses/delete/<%= course.course_id %>" method="POST" style="display:inline;" onsubmit="return confirm('Delete this course?');">
+                      <button type="submit" class="delete-btn">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
 
-          <% currentTrack = course.track_name; %>
-          <div class="ttl-track-section">
-            <h3 class="ttl-track-title"><%= course.track_name %></h3>
-        <% } %>
+      <% } else { %>
 
-            <div class="ttl-course-card">
-              <div class="ttl-course-order">
-                Module <%= course.order_no %>
+        <!-- ===== Learner Card View ===== -->
+        <div class="projects-grid">
+          <% safeCourses.forEach(course => { %>
+            <div class="project-card">
+              
+              <div class="project-header">
+                <h3 class="project-title"><%= course.course_name %></h3>
+                <span class="project-status">
+                  <%= course.track_name %>
+                </span>
               </div>
-              <div class="ttl-course-content">
-                <h5><%= course.course_name %></h5>
+
+              <div class="project-body">
+                <p><strong>Module:</strong> <%= course.order_no %></p>
+
                 <% if (course.description) { %>
-                  <p><%= course.description %></p>
+                  <p><strong>Description:</strong> <%= course.description %></p>
                 <% } %>
               </div>
-            </div>
 
-        <% if (idx === safeCourses.length - 1) { %>
-          </div>
-        <% } %>
-      <% }) %>
+              <div class="project-footer">
+                <a href="/courses/<%= course.course_id %>" class="view-btn">
+                  View Course
+                </a>
+              </div>
+
+            </div>
+          <% }) %>
+        </div>
+
+      <% } %>
 
     <% } %>
+
   </main>
 </div>
 

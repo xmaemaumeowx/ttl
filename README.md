@@ -74,8 +74,8 @@ _The Tech Lab_ is a modern, role-based Learning Management System built with Nod
     ```bash
         npm install
         ```
-3. ***Setup Oracle Database***
-Configure your user/table schema (see /db/schema.sql)
+3. ***Setup Neon Serverless PostgreSQL***
+Configure your user/table schema 
 Add .env file (see .env.example):
 
 4. ***Run the server**

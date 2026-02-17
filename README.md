@@ -17,7 +17,9 @@ _The Tech Lab_ is a modern, role-based Learning Management System built with Nod
   - Edit personal info (name, email) and password (secure, with bcrypt)
 - **Courses, Modules, Lessons Hierarchy**
   - Courses grouped by tracks; modules and lessons display status and update dates
-- **Dashboard, Calendar, and Reports** 
+- **Dashboard & Reports**
+  - Limited
+- **Calendar**
   - Learners: Ability to book an appointment
   - Mentors: Ability to open booking slot
 - **Accessible, responsive TTL-themed UI**

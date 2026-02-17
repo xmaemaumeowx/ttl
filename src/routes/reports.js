@@ -1,10 +1,15 @@
+// src/routes/reports.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
 router.get('/reports', requireAuth, async (req, res) => {
+  const userId = req.user?.user_id ?? req.user?.userId;
+
   try {
+    if (!userId) return res.status(401).send("Missing user id. Please log in again.");
+
     // MENTOR VIEW
     if (req.user.role === 'mentor') {
       const result = await db.query(
@@ -14,13 +19,12 @@ router.get('/reports', requireAuth, async (req, res) => {
           lt.track_name,
           COUNT(e.user_id)::int AS enrolled_count
         FROM learning_tracks lt
-        LEFT JOIN enrollments e
-          ON lt.track_id = e.track_id
+        LEFT JOIN enrollments e ON lt.track_id = e.track_id
         WHERE lt.mentor_id = $1
         GROUP BY lt.track_id, lt.track_name
         ORDER BY lt.track_name;
         `,
-        [req.user.user_id]
+        [userId]
       );
 
       return res.render('mentor-report', {
@@ -30,13 +34,14 @@ router.get('/reports', requireAuth, async (req, res) => {
       });
     }
 
-    // LEARNER (DEFAULT) VIEW
+    // LEARNER VIEW (your current query shows projects; keep as-is but fix param)
     const result = await db.query(
       `
-      SELECT name, start_date, end_date, status FROM PROJECTS
+      SELECT name, start_date, end_date, status
+      FROM projects
       WHERE user_id = $1
       `,
-      [req.user.user_id]
+      [userId]
     );
 
     return res.render('reports', {

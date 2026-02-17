@@ -6,7 +6,16 @@ function requireAuth(req, res, next) {
   if (!token) return res.redirect("/login");
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Backward compatible normalization:
+    // old payload: { userId, role }
+    // new payload: { user_id, role }
+    req.user = {
+      ...decoded,
+      user_id: decoded.user_id ?? decoded.userId
+    };
+
     next();
   } catch (err) {
     console.error("JWT error:", err);
@@ -17,7 +26,7 @@ function requireAuth(req, res, next) {
 function requireMentor(req, res, next) {
   if (!req.user) return res.redirect("/login");
   if (req.user.role !== "mentor") {
-    console.warn(`Unauthorized access attempt by user ${req.user.userId}`);
+    console.warn(`Unauthorized access attempt by user ${req.user.user_id}`);
     return res.status(403).send("Access denied. Mentors only.");
   }
   next();

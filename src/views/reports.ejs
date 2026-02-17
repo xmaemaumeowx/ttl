@@ -2,17 +2,10 @@
 <%- include('partials/navbar') %>
 
 <div class="dashboard">
-  <%
-    const safeUser = locals.user || user || {
-      fullName: 'Guest',
-      role: 'guest',
-      avatar: ''
-    };
-
-    const safeReports = Array.isArray(reports) ? reports : [];
-  %>
-
-  <%- include('partials/sidebar', { activePage: 'reports', user: safeUser }) %>
+<%
+  const safeUser = locals.user || { role: 'guest', avatar: '/images/default-avatar.png' };
+%>
+<%- include('partials/sidebar', { activePage: 'courses', user: safeUser }) %>
 
   <main class="dashboard-main-content">
     <h1 class="page-title">📊 Learner Reports</h1>

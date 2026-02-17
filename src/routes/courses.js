@@ -9,7 +9,7 @@ const { requireAuth } = require('../middleware/auth');
    GET COURSES PAGE
    Mounted at: /courses
 ================================ */
-router.get('/', requireAuth, async (req, res) => {
+router.get('/courses', requireAuth, async (req, res) => {
   try {
     // loadUserFromDB already populated res.locals.user
     const currentUser = res.locals.user;

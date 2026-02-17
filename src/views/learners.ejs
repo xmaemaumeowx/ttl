@@ -1,15 +1,19 @@
-<%- include('partials/header', { pageTitle: pageTitle }) %>
+<%- include('partials/header', { pageTitle }) %>
 <%- include('partials/navbar') %>
+
 <div class="dashboard">
-  <%- include('partials/sidebar', { activePage: activePage }) %>
+  <%- include('partials/sidebar', { activePage }) %>
+
   <main class="dashboard-main-content">
     <h1 class="page-title">My Learners</h1>
+
     <% if (!learners || learners.length === 0) { %>
       <p class="no-data">No learners assigned to you.</p>
     <% } else { %>
       <table class="learners-table">
         <thead>
           <tr>
+            <th>Avatar</th>
             <th>Name</th>
             <th>Email</th>
             <th>Track</th>
@@ -17,12 +21,26 @@
             <th>Duration (weeks)</th>
           </tr>
         </thead>
+
         <tbody>
-          <% learners.forEach(learner => { %>
+          <% learners.forEach((learner) => { %>
             <tr>
+              <td>
+                <img
+                  src="<%= learner.avatar || '/images/default-avatar.png' %>"
+                  alt="Avatar for <%= learner.full_name %>"
+                  width="32"
+                  height="32"
+                  style="border-radius:50%; object-fit:cover;"
+                  onerror="this.onerror=null;this.src='/images/default-avatar.png';"
+                />
+              </td>
+
               <td><%= learner.full_name %></td>
-              <td><%= learner.email %></td> 
-              <td><%= learner.avatar %></td>              
+              <td><%= learner.email %></td>
+              <td><%= learner.track || '' %></td>
+              <td><%= learner.description || '' %></td>
+              <td><%= learner.duration_weeks ?? '' %></td>
             </tr>
           <% }) %>
         </tbody>
@@ -30,4 +48,5 @@
     <% } %>
   </main>
 </div>
+
 <%- include('partials/footer') %>

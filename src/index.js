@@ -10,14 +10,14 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 
 const db = require("./db/postgres");
-
-const projectRoutes = require("./routes/projects");
-const authRoutes = require("./routes/auth");
-const calendarRouter = require("./routes/calendar");
-const coursesRouter = require("./routes/courses");
-const reportsRouter = require("./routes/reports");
-
 const cloudinaryStorage = require("./config/cloudinaryStorage");
+
+// Routers
+const authRoutes = require("./routes/auth");
+const projectRoutes = require("./routes/projects");
+const coursesRouter = require("./routes/courses");
+const calendarRouter = require("./routes/calendar");
+const reportsRouter = require("./routes/reports");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -33,6 +33,7 @@ app.use(cookieParser());
 
 /* ===============================
    STATIC FILES & VIEWS
+   Put BEFORE routes so /images, /assets, css/js resolve correctly
 ================================ */
 app.use(express.static(path.join(__dirname, "../public")));
 app.set("view engine", "ejs");
@@ -40,6 +41,7 @@ app.set("views", path.join(__dirname, "views"));
 
 /* ===============================
    JWT DECODE (GLOBAL) + NORMALIZE
+   Supports old tokens { userId } and new tokens { user_id }
 ================================ */
 app.use((req, res, next) => {
   const token = req.cookies?.token;
@@ -51,8 +53,6 @@ app.use((req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Normalize to support both old tokens { userId } and new tokens { user_id }
     const normalizedUserId = decoded.user_id ?? decoded.userId;
 
     req.user = {
@@ -71,11 +71,12 @@ app.use((req, res, next) => {
 
 /* ===============================
    LOAD USER FROM DB (FOR AVATAR & ROLE)
-   Sets res.locals.user for templates
+   Makes DB user available to all EJS templates as locals.user
 ================================ */
 app.use(loadUserFromDB);
+
 async function loadUserFromDB(req, res, next) {
-  const userId = req.user?.userId; // normalized above
+  const userId = req.user?.userId;
 
   if (!userId) {
     res.locals.user = null;
@@ -91,14 +92,13 @@ async function loadUserFromDB(req, res, next) {
     );
 
     const u = result.rows[0];
-
     res.locals.user = u
       ? {
           userId: u.user_id,
           fullName: u.full_name,
           email: u.email,
           role: u.role,
-          avatar: u.avatar, // Cloudinary URL stored in DB
+          avatar: u.avatar, // Cloudinary URL saved in DB
         }
       : null;
 
@@ -162,7 +162,6 @@ app.get("/dashboard", requireAuth, async (req, res) => {
 
   res.render("dashboard", {
     announcements: result.rows || [],
-    user: res.locals.user, // optional; locals.user already available
   });
 });
 
@@ -201,7 +200,6 @@ app.get("/settings", requireAuth, (req, res) => {
   res.render("settings", {
     successMessage: req.query.success || "",
     errorMessage: req.query.error || "",
-    user: res.locals.user, // optional
   });
 });
 
@@ -217,12 +215,12 @@ app.post(
   async (req, res) => {
     if (!req.file?.path) return res.redirect("/settings?error=Upload failed");
 
-    await db.query(
-      `UPDATE users SET avatar=$1 WHERE user_id=$2`,
-      [req.file.path, req.user.userId] // normalized userId
-    );
+    await db.query(`UPDATE users SET avatar=$1 WHERE user_id=$2`, [
+      req.file.path,
+      req.user.userId,
+    ]);
 
-    return res.redirect("/settings?success=Avatar updated!");
+    res.redirect("/settings?success=Avatar updated!");
   }
 );
 
@@ -232,12 +230,13 @@ app.post(
 app.post("/profile/update", requireAuth, async (req, res) => {
   const { fullName, email } = req.body;
 
-  await db.query(
-    `UPDATE users SET full_name=$1, email=$2 WHERE user_id=$3`,
-    [fullName, email, req.user.userId]
-  );
+  await db.query(`UPDATE users SET full_name=$1, email=$2 WHERE user_id=$3`, [
+    fullName,
+    email,
+    req.user.userId,
+  ]);
 
-  return res.redirect("/settings?success=Profile updated!");
+  res.redirect("/settings?success=Profile updated!");
 });
 
 /* ===============================
@@ -251,19 +250,19 @@ app.post("/profile/password", requireAuth, async (req, res) => {
     [req.user.userId]
   );
 
-  const valid = await bcrypt.compare(
-    currentPassword,
-    result.rows[0]?.password_hash || ""
-  );
+  const hash = result.rows[0]?.password_hash;
+  if (!hash) return res.redirect("/settings?error=User not found");
+
+  const valid = await bcrypt.compare(currentPassword, hash);
   if (!valid) return res.redirect("/settings?error=Wrong password");
 
   const hashed = await bcrypt.hash(newPassword, 10);
-  await db.query(
-    `UPDATE users SET password_hash=$1 WHERE user_id=$2`,
-    [hashed, req.user.userId]
-  );
+  await db.query(`UPDATE users SET password_hash=$1 WHERE user_id=$2`, [
+    hashed,
+    req.user.userId,
+  ]);
 
-  return res.redirect("/settings?success=Password updated!");
+  res.redirect("/settings?success=Password updated!");
 });
 
 /* ===============================

@@ -1,3 +1,13 @@
+<%
+  // Prefer DB user loaded into res.locals.user
+  const safeUser = locals.user || (typeof user !== 'undefined' ? user : null);
+
+  const navAvatar =
+    (safeUser && typeof safeUser.avatar === 'string' && safeUser.avatar.trim())
+      ? safeUser.avatar.trim()
+      : '/images/default-avatar.png'; // must exist in /public/images/
+%>
+
 <div class="mt-navbar-top">
   <div class="mt-navbar-left">
     <div class="mt-logo">
@@ -8,11 +18,20 @@
       <span class="mt-search-icon">&#128269;</span>
     </div>
   </div>
+
   <div class="mt-navbar-right">
     <span class="mt-nav-link"><span class="mt-icon">&#10067;</span> Help</span>
     <span class="mt-nav-link"><span class="mt-icon">&#128172;</span> Feedback</span>
+
     <span class="mt-nav-link">
-      <span class="mt-icon"><img id="nav-avatar" src="<%= user.avatar || '/img/default-avatar.png' %>" alt="Avatar" style="height:30px;"></span>
+      <span class="mt-icon">
+        <img
+          id="nav-avatar"
+          src="<%= navAvatar %>"
+          alt="Avatar"
+          style="height:30px;width:30px;border-radius:50%;object-fit:cover;"
+        >
+      </span>
       <a href="/logout" class="btn">Sign Out</a>
     </span>
   </div>

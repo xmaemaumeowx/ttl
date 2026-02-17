@@ -1,30 +1,27 @@
 // src/routes/courses.js
+
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
-router.get('/courses', requireAuth, async (req, res) => {
-  // IMPORTANT: your app uses different JWT shapes in different places.
-  // Prefer req.user.user_id (used in reports.js/courses.js in your repo).
-  // Fallback to req.user.userId if needed.
-  const userId = req.user?.user_id ?? req.user?.userId;
-
+/* ===============================
+   GET COURSES PAGE
+   Mounted at: /courses
+================================ */
+router.get('/', requireAuth, async (req, res) => {
   try {
-    if (!userId) {
-      // If this happens, JWT payload is inconsistent—fix at sign/verify time.
-      return res.status(401).render('courses', {
-        courses: [],
-        activePage: 'courses',
-        user: req.user,
-        error: 'Session is missing user id. Please log in again.'
-      });
+    // loadUserFromDB already populated res.locals.user
+    const currentUser = res.locals.user;
+
+    if (!currentUser?.userId) {
+      return res.redirect('/login');
     }
 
     let result;
 
-    if (req.user.role === 'mentor') {
-      // Mentor: courses belonging to tracks mentored by this user
+    if (currentUser.role === 'mentor') {
+      // Mentor: courses under tracks they handle
       result = await db.query(
         `
         SELECT
@@ -40,10 +37,10 @@ router.get('/courses', requireAuth, async (req, res) => {
         WHERE lt.mentor_id = $1
         ORDER BY lt.track_name, c.order_no;
         `,
-        [userId]
+        [currentUser.userId]
       );
     } else {
-      // Learner: courses for tracks this learner is enrolled in
+      // Learner: courses from enrolled tracks
       result = await db.query(
         `
         SELECT
@@ -61,24 +58,23 @@ router.get('/courses', requireAuth, async (req, res) => {
         WHERE e.user_id = $1
         ORDER BY lt.track_name, c.order_no;
         `,
-        [userId]
+        [currentUser.userId]
       );
     }
 
+    res.locals.pageTitle = "Courses | The Tech Lab";
+    res.locals.activePage = "courses";
+
     return res.render('courses', {
       courses: result.rows || [],
-      activePage: 'courses',
-      user: req.user,
       error: ''
     });
+
   } catch (err) {
     console.error('Error fetching courses:', err);
 
-    // Always pass courses to prevent "courses is not defined" in EJS
     return res.status(500).render('courses', {
       courses: [],
-      activePage: 'courses',
-      user: req.user,
       error: 'Unable to load courses at the moment.'
     });
   }

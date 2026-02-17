@@ -1,65 +1,65 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const db = require('../db');
-const { requireAuth } = require('../middleware/auth');
+const db = require("../db/postgres");
 
-// GET /courses
-router.get('/courses', requireAuth, async (req, res) => {
+/* ===============================
+   AUTH MIDDLEWARE
+================================ */
+function requireAuth(req, res, next) {
+  if (!req.user) return res.redirect("/login");
+  next();
+}
+
+
+/* ===============================
+   LIST COURSES
+================================ */
+router.get("/", requireAuth, async (req, res) => {
   try {
+    let courses;
 
-    // ===============================
-    // MENTOR VIEW
-    // ===============================
-    if (req.user.role === 'mentor') {
-
-      const result = await db.query(`
-        SELECT 
-          lt.track_name,
-          c.course_name,
-          c.description,
-          c.order_no
-        FROM courses c
-        JOIN learning_tracks lt 
-          ON c.track_id = lt.track_id
-        WHERE lt.mentor_id = $1
-        ORDER BY lt.track_name, c.order_no;
-      `, [req.user.user_id]);
-
-      return res.render('courses', {
-        courses: result.rows,
-        user: req.user,
-        activePage: 'courses'
-      });
+    if (req.user.role === "mentor") {
+      const result = await db.query(
+        `SELECT c.*, 
+                u.*, 
+                lt.*
+         FROM courses c
+         LEFT JOIN learning_tracks lt ON c.track_id = lt.track_id
+         LEFT JOIN enrollments e ON c.track_id = e.track_id
+         LEFT JOIN users u ON e.user_id = e.user_id
+         WHERE mentor_id = $1
+         `
+      );
+      courses = result.rows;
+    } else {
+      const result = await db.query(
+        `SELECT c.*, 
+                u.*, 
+                lt.*
+         FROM courses c
+         LEFT JOIN learning_tracks lt ON c.track_id = lt.track_id
+         LEFT JOIN enrollments e ON c.track_id = e.track_id
+         LEFT JOIN users u ON e.user_id = e.user_id
+         WHERE user_id = $1`,
+        [req.user.userId]
+      );
+      courses = result.rows;
     }
 
-    // ===============================
-    // LEARNER VIEW
-    // ===============================
-    const result = await db.query(`
-      SELECT 
-        lt.track_name,
-        c.course_name,
-        c.description,
-        c.order_no
-      FROM enrollments e
-      JOIN learning_tracks lt 
-        ON e.track_id = lt.track_id
-      JOIN courses c 
-        ON lt.track_id = c.track_id
-      WHERE e.user_id = $1
-      ORDER BY lt.track_name, c.order_no;
-    `, [req.user.user_id]);
-
-    res.render('courses', {
-      courses: result.rows,
-      user: req.user,
-      activePage: 'courses'
+    res.render("courses", {
+      projects,
+      success: req.query.success || "",
+      error: req.query.error || "",
     });
-
   } catch (err) {
-    console.error("Courses error:", err);
-    res.status(500).send("Server Error");
+    console.error("Error fetching projects:", err);
+    res.render("courses", {
+      projects: [],
+      success: "",
+      error: "Failed to load projects",
+    });
   }
 });
+
 
 module.exports = router;

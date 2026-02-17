@@ -17,6 +17,7 @@ router.get('/reports', requireAuth, async (req, res) => {
         SELECT
           lt.track_id,
           lt.track_name,
+          lt.user_id,
           COUNT(e.user_id)::int AS enrolled_count
         FROM learning_tracks lt
         LEFT JOIN enrollments e ON lt.track_id = e.track_id

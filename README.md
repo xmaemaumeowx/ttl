@@ -25,7 +25,7 @@ _The Tech Lab_ is a modern, role-based Learning Management System built with Nod
 ## Technologies
 
 - **Node.js + Express**
-- **OracleDB**
+- **PostgreSQL**
 - **EJS Templating**
 - **Multer** (file uploads)
 - **bcrypt/bcryptjs** (secure password hashing)

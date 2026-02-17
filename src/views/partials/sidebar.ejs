@@ -7,7 +7,23 @@
   %>
 
   <div class="profile-avatar">
-    <img src="<%= avatarUrl %>" alt="Profile photo">
+    <div class="profile-section">
+  <% 
+    const avatarUrl = user && user.avatar 
+      ? user.avatar 
+      : '/images/default-avatar.png'; 
+  %>
+
+  <img 
+    src="<%= avatarUrl %>" 
+    alt="Profile Photo"
+    class="profile-avatar"
+    onerror="this.onerror=null;this.src='/images/default-avatar.png';"
+  >
+
+  <h4><%= user?.fullName || 'User' %></h4>
+</div>
+
   </div>
 
   <nav>

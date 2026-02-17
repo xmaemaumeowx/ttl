@@ -3,20 +3,16 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 
-// GET /reports
 router.get("/reports", async (req, res) => {
   try {
     const currentUser = res.locals.user;
-
-    if (!currentUser?.userId) {
-      return res.redirect("/login");
-    }
+    if (!currentUser?.userId) return res.redirect("/login");
 
     res.locals.pageTitle = "Reports | The Tech Lab";
     res.locals.activePage = "reports";
 
     // =========================
-    // MENTOR VIEW
+    // MENTOR VIEW (track enrollments)
     // =========================
     if (currentUser.role === "mentor") {
       const result = await db.query(
@@ -44,7 +40,6 @@ router.get("/reports", async (req, res) => {
 
     // =========================
     // LEARNER VIEW (progress per track)
-    // returns: track_name, progress, completed_projects, total_projects
     // =========================
     const result = await db.query(
       `
@@ -84,7 +79,8 @@ router.get("/reports", async (req, res) => {
   } catch (err) {
     console.error("Error loading reports:", err);
 
-    // Render a safe page instead of raw 500 (helps debugging in UI)
+    // Don’t render mentor-report without mentorReport defined
+    // Render a safe generic reports page
     return res.status(500).render("reports", {
       reports: [],
       activePage: "reports",

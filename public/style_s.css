@@ -565,7 +565,7 @@ main {
   margin-top: 1.9em;
 }
 .view-btn, .edit-btn {
-  padding: 0.7em 1.3em;
+  padding: 7px 13px;
   border-radius: 7px;
   font-weight: 600;
   font-size: 1em;
@@ -575,6 +575,7 @@ main {
   outline: none;
   transition: background 0.18s, color 0.15s;
   cursor: pointer;
+  color: var(--text-light);
 }
 .view-btn {
   background: var(--primary-color);

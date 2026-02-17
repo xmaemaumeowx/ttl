@@ -8,7 +8,7 @@ const db = require('../db');
    GET REPORTS PAGE
    Mounted at: /reports
 ========================================== */
-router.get('/', async (req, res) => {
+router.get('/reports', async (req, res) => {
   try {
     const currentUser = res.locals.user;
 

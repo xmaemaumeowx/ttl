@@ -3,12 +3,13 @@
 
 <div class="dashboard">
   <%
-    // Safe objects so the page never crashes if route forgets to pass data
-    const safeUser = user || locals.user || {
+    // Ensure sidebar always receives a user with an avatar field
+    const safeUser = locals.user || user || {
       fullName: 'Guest',
       role: 'guest',
-      avatar: '/images/default-avatar.png'
+      avatar: '' // leave blank; sidebar should fallback safely
     };
+
     const safeCourses = Array.isArray(courses) ? courses : [];
   %>
 
@@ -41,19 +42,16 @@
       <% safeCourses.forEach((course, idx) => { %>
         <% if (currentTrack !== course.track_name) { %>
           <% if (currentTrack !== null) { %>
-            </div> <!-- close previous track section -->
+            </div>
           <% } %>
 
           <% currentTrack = course.track_name; %>
-
           <div class="ttl-track-section">
             <h3 class="ttl-track-title"><%= course.track_name %></h3>
         <% } %>
 
             <div class="ttl-course-card">
-              <div class="ttl-course-order">
-                Module <%= course.order_no %>
-              </div>
+              <div class="ttl-course-order">Module <%= course.order_no %></div>
               <div class="ttl-course-content">
                 <h5><%= course.course_name %></h5>
                 <% if (course.description) { %>
@@ -63,7 +61,7 @@
             </div>
 
         <% if (idx === safeCourses.length - 1) { %>
-          </div> <!-- close last track section -->
+          </div>
         <% } %>
       <% }) %>
     <% } %>

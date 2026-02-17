@@ -1,6 +1,6 @@
 # The Tech Lab LMS
 
-_The Tech Lab_ is a modern, role-based Learning Management System built with Node.js, Express, OracleDB, EJS, and custom CSS, featuring Google Login support and a visually engaging TTL (The Tech Lab) theme.
+_The Tech Lab_ is a modern, role-based Learning Management System built with Node.js, Express, PostgreSQL, EJS, and custom CSS, featuring Google Login support and a visually engaging TTL (The Tech Lab) theme.
 
 ---
 

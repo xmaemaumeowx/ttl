@@ -1,16 +1,16 @@
-// src/routes/reports.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
 router.get('/reports', requireAuth, async (req, res) => {
-  const userId = req.user?.user_id ?? req.user?.userId;
-
   try {
+    const userId = req.user?.userId ?? req.user?.user_id ?? req.user?.userId;
     if (!userId) return res.status(401).send("Missing user id. Please log in again.");
 
+    // =========================
     // MENTOR VIEW
+    // =========================
     if (req.user.role === 'mentor') {
       const result = await db.query(
         `
@@ -34,12 +34,45 @@ router.get('/reports', requireAuth, async (req, res) => {
       });
     }
 
-    // LEARNER VIEW (your current query shows projects; keep as-is but fix param)
+    // =========================
+    // LEARNER VIEW (progress per track)
+    // Supports projects.user_id OR projects.learner_id
+    // Uses DISTINCT to prevent double-counting.
+    // =========================
     const result = await db.query(
       `
-      SELECT name, start_date, end_date, status
-      FROM projects
-      WHERE user_id = $1
+      SELECT
+        lt.track_id,
+        lt.track_name,
+
+        COUNT(DISTINCT p.project_id)::int AS total_projects,
+
+        COUNT(DISTINCT CASE WHEN p.status = 'Completed' THEN p.project_id END)::int
+          AS completed_projects,
+
+        ROUND(
+          COUNT(DISTINCT CASE WHEN p.status = 'Completed' THEN p.project_id END) * 100.0
+          / GREATEST(COUNT(DISTINCT p.project_id), 1)
+        )::int AS progress,
+
+        CASE
+          WHEN COUNT(DISTINCT p.project_id) = 0 THEN 'Not Started'
+          WHEN COUNT(DISTINCT CASE WHEN p.status = 'Completed' THEN p.project_id END)
+               = COUNT(DISTINCT p.project_id) THEN 'Completed'
+          ELSE 'In Progress'
+        END AS status
+
+      FROM enrollments e
+      JOIN learning_tracks lt
+        ON lt.track_id = e.track_id
+
+      LEFT JOIN projects p
+        ON p.track_id = lt.track_id
+       AND (p.user_id = e.user_id OR p.learner_id = e.user_id)
+
+      WHERE e.user_id = $1
+      GROUP BY lt.track_id, lt.track_name
+      ORDER BY lt.track_name;
       `,
       [userId]
     );

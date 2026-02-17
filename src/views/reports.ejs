@@ -1,20 +1,26 @@
 <%- include('partials/header', { pageTitle: "Reports | The Tech Lab" }) %>
 <%- include('partials/navbar') %>
 
-<div class="dashboard">
 <%
-  const safeUser = locals.user || { role: 'guest', avatar: '/images/default-avatar.png' };
+  const safeUser = locals.user || user || {
+    fullName: 'Guest',
+    role: 'guest',
+    avatar: ''
+  };
+  const safeReports = Array.isArray(reports) ? reports : [];
 %>
-<%- include('partials/sidebar', { activePage: 'courses', user: safeUser }) %>
+
+<div class="dashboard">
+  <%- include('partials/sidebar', { activePage: 'reports', user: safeUser }) %>
 
   <main class="dashboard-main-content">
     <h1 class="page-title">📊 Learner Reports</h1>
-    <p class="text-muted">Your course progress and milestones overview</p>
+    <p class="text-muted">Track progress overview</p>
 
     <% if (safeReports.length === 0) { %>
       <div class="empty-state">
         <h4>No progress data yet</h4>
-        <p>Once you start working on projects, your learning progress will appear here.</p>
+        <p>If you just enrolled, progress will appear once projects are added.</p>
       </div>
     <% } else { %>
       <div style="overflow-x:auto;">
@@ -23,38 +29,27 @@
             <tr>
               <th>Learning Track</th>
               <th>Progress</th>
-              <th>Completed</th>
-              <th>Status</th>
+              <th>Completed Projects</th>
+              <th>Total Projects</th>
             </tr>
           </thead>
           <tbody>
-            <% safeReports.forEach(r => { %>
+            <% safeReports.forEach((r) => { %>
+              <%
+                const progress = Number(r.progress ?? 0);
+              %>
               <tr>
                 <td><%= r.track_name %></td>
 
                 <td style="min-width:200px;">
                   <div class="ttl-progress-container">
-                    <div class="ttl-progress-bar" style="width:<%= r.progress %>%"></div>
+                    <div class="ttl-progress-bar" style="width:<%= progress %>%;"></div>
                   </div>
-                  <small><%= r.progress %>% Complete</small>
+                  <small><%= progress %>%</small>
                 </td>
 
-                <td>
-                  <span class="badge ttl-badge">
-                    <%= r.completed_projects %> / <%= r.total_projects %>
-                  </span>
-                </td>
-
-                <td>
-                  <span class="status-pill
-                    <%= r.status === 'Completed'
-                      ? 'status-complete'
-                      : r.status === 'In Progress'
-                      ? 'status-active'
-                      : 'status-planned' %>">
-                    <%= r.status %>
-                  </span>
-                </td>
+                <td><span class="badge ttl-badge"><%= r.completed_projects %></span></td>
+                <td><span class="badge ttl-badge"><%= r.total_projects %></span></td>
               </tr>
             <% }) %>
           </tbody>

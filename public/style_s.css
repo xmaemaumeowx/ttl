@@ -1129,3 +1129,8 @@ main {
   border-radius: 12px;
   font-size: 0.75rem;
 }
+.avatar-circle{
+  width:32px;height:32px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:#E6E6E6;color:#333;font-weight:600;font-size:12px;
+}

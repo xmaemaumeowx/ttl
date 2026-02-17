@@ -16,9 +16,6 @@
             <th>Avatar</th>
             <th>Name</th>
             <th>Email</th>
-            <th>Track</th>
-            <th>Description</th>
-            <th>Duration (weeks)</th>
           </tr>
         </thead>
 
@@ -26,21 +23,17 @@
           <% learners.forEach((learner) => { %>
             <tr>
               <td>
-                <img
-                  src="<%= learner.avatar || '/images/default-avatar.png' %>"
-                  alt="Avatar for <%= learner.full_name %>"
-                  width="32"
-                  height="32"
-                  style="border-radius:50%; object-fit:cover;"
-                  onerror="this.onerror=null;this.src='/images/default-avatar.png';"
-                />
+                <%
+                    const initials = (learner.full_name || "")
+                      .split(/\s+/).filter(Boolean).slice(0,2)
+                      .map(s => s[0].toUpperCase()).join("");
+                  %>
+
+<div class="avatar-circle" title="<%= learner.full_name %>"><%= initials %></div>
               </td>
 
               <td><%= learner.full_name %></td>
               <td><%= learner.email %></td>
-              <td><%= learner.track || '' %></td>
-              <td><%= learner.description || '' %></td>
-              <td><%= learner.duration_weeks ?? '' %></td>
             </tr>
           <% }) %>
         </tbody>

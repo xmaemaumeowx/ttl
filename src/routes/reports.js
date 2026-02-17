@@ -22,7 +22,7 @@ router.get('/reports', requireAuth, async (req, res) => {
         FROM learning_tracks lt
         LEFT JOIN enrollments e ON lt.track_id = e.track_id
         WHERE lt.mentor_id = $1
-        GROUP BY lt.track_id, lt.track_name
+        GROUP BY lt.track_id, lt.track_name, e.user_id
         ORDER BY lt.track_name;
         `,
         [userId]

@@ -2,13 +2,14 @@
 <%- include('partials/navbar') %>
 
 <div class="dashboard">
-  <% 
-    // Safe user object for templates (align with projects.ejs)
-    const safeUser = locals.user || { 
-      fullName: 'Guest', 
-      role: 'guest', 
-      avatar: '/images/default-avatar.png' 
+  <%
+    // Safe objects so the page never crashes if route forgets to pass data
+    const safeUser = user || locals.user || {
+      fullName: 'Guest',
+      role: 'guest',
+      avatar: '/images/default-avatar.png'
     };
+    const safeCourses = Array.isArray(courses) ? courses : [];
   %>
 
   <%- include('partials/sidebar', { activePage: 'courses', user: safeUser }) %>
@@ -16,7 +17,6 @@
   <main class="dashboard-main-content">
     <h1 class="page-title">📚 My Courses</h1>
 
-    <!-- Optional toast messages (same pattern as projects.ejs) -->
     <% if (typeof success !== 'undefined' && success) { %>
       <div class="toast success"><%= success %></div>
     <% } %>
@@ -24,7 +24,7 @@
       <div class="toast error"><%= error %></div>
     <% } %>
 
-    <% if (!courses || courses.length === 0) { %>
+    <% if (safeCourses.length === 0) { %>
       <div class="empty-state">
         <h4>No courses available</h4>
         <% if (safeUser.role === 'mentor') { %>
@@ -34,16 +34,14 @@
         <% } %>
       </div>
     <% } else { %>
-
-      <% 
-        // Group by track_name (keep your original grouping idea but cleaner)
-        let currentTrack = null; 
+      <%
+        let currentTrack = null;
       %>
 
-      <% courses.forEach((course, idx) => { %>
+      <% safeCourses.forEach((course, idx) => { %>
         <% if (currentTrack !== course.track_name) { %>
           <% if (currentTrack !== null) { %>
-            </div> <!-- close previous ttl-track-section -->
+            </div> <!-- close previous track section -->
           <% } %>
 
           <% currentTrack = course.track_name; %>
@@ -64,14 +62,10 @@
               </div>
             </div>
 
-        <% 
-          // close final section after the last item
-          if (idx === courses.length - 1) { 
-        %>
-          </div>
+        <% if (idx === safeCourses.length - 1) { %>
+          </div> <!-- close last track section -->
         <% } %>
       <% }) %>
-
     <% } %>
   </main>
 </div>

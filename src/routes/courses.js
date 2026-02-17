@@ -1,65 +1,67 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const db = require("../db/postgres");
+const db = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
-/* ===============================
-   AUTH MIDDLEWARE
-================================ */
-function requireAuth(req, res, next) {
-  if (!req.user) return res.redirect("/login");
-  next();
-}
-
-
-/* ===============================
-   LIST COURSES
-================================ */
-router.get("/", requireAuth, async (req, res) => {
+router.get('/courses', requireAuth, async (req, res) => {
   try {
-    let courses;
+    let result;
 
-    if (req.user.role === "mentor") {
-      const result = await db.query(
-        `SELECT c.*, 
-                u.*, 
-                lt.*
-         FROM courses c
-         LEFT JOIN learning_tracks lt ON c.track_id = lt.track_id
-         LEFT JOIN enrollments e ON c.track_id = e.track_id
-         LEFT JOIN users u ON e.user_id = e.user_id
-         WHERE mentor_id = $1
-         `
+    if (req.user.role === 'mentor') {
+      // Mentor: courses for tracks mentored by this user
+      result = await db.query(
+        `
+        SELECT
+          c.course_id,
+          c.course_name,
+          c.description,
+          c.order_no,
+          lt.track_id,
+          lt.track_name
+        FROM courses c
+        JOIN learning_tracks lt ON c.track_id = lt.track_id
+        WHERE lt.mentor_id = $1
+        ORDER BY lt.track_name, c.order_no;
+        `,
+        [req.user.user_id]
       );
-      courses = result.rows;
     } else {
-      const result = await db.query(
-        `SELECT c.*, 
-                u.*, 
-                lt.*
-         FROM courses c
-         LEFT JOIN learning_tracks lt ON c.track_id = lt.track_id
-         LEFT JOIN enrollments e ON c.track_id = e.track_id
-         LEFT JOIN users u ON e.user_id = e.user_id
-         WHERE user_id = $1`,
-        [req.user.userId]
+      // Learner: courses for tracks the learner is enrolled in
+      result = await db.query(
+        `
+        SELECT
+          c.course_id,
+          c.course_name,
+          c.description,
+          c.order_no,
+          lt.track_id,
+          lt.track_name
+        FROM enrollments e
+        JOIN learning_tracks lt ON e.track_id = lt.track_id
+        JOIN courses c ON c.track_id = lt.track_id
+        WHERE e.user_id = $1
+        ORDER BY lt.track_name, c.order_no;
+        `,
+        [req.user.user_id]
       );
-      courses = result.rows;
     }
 
-    res.render("courses", {
-      projects,
-      success: req.query.success || "",
-      error: req.query.error || "",
+    return res.render('courses', {
+      courses: result.rows,
+      activePage: 'courses',
+      user: req.user
     });
   } catch (err) {
-    console.error("Error fetching projects:", err);
-    res.render("courses", {
-      projects: [],
-      success: "",
-      error: "Failed to load projects",
+    console.error('Error fetching courses:', err);
+
+    // IMPORTANT: always pass courses to avoid "courses is not defined"
+    return res.status(500).render('courses', {
+      courses: [],
+      activePage: 'courses',
+      user: req.user,
+      error: 'Unable to load courses at the moment.'
     });
   }
 });
-
 
 module.exports = router;

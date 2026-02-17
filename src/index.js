@@ -154,7 +154,7 @@ app.use("/calendar", loadUserFromDB, calendarRouter);
 /* ===============================
    REPORTS
 ================================ */
-app.use('/reports', reportsRouter);
+app.use('/', reportsRouter);
 
 
 /* ===============================

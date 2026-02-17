@@ -11,13 +11,15 @@ _The Tech Lab_ is a modern, role-based Learning Management System built with Nod
   - Users can sign up or sign in with their Google account for an instant, secure onboarding experience.
 - **Role-based Sidebar & Navigation**
   - Learners: Access to Projects, full curriculum tracking
-  - Mentors: No "Projects" visibility, mentor-specific controls
+  - Mentors: Learner list visibility, mentor-specific controls
 - **Profile & Avatar Management**
   - Upload and update profile pictures
   - Edit personal info (name, email) and password (secure, with bcrypt)
 - **Courses, Modules, Lessons Hierarchy**
   - Courses grouped by tracks; modules and lessons display status and update dates
-- **Dashboard, Calendar, and Reports** -- for phase 2
+- **Dashboard, Calendar, and Reports** 
+  - Learners: Ability to book an appointment
+  - Mentors: Ability to open booking slot
 - **Accessible, responsive TTL-themed UI**
 
 ---

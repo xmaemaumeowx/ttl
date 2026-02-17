@@ -13,7 +13,7 @@
       <table class="learners-table">
         <thead>
           <tr>
-            <th>Avatar</th>
+            <th>Initials</th>
             <th>Name</th>
             <th>Email</th>
           </tr>
@@ -28,8 +28,7 @@
                       .split(/\s+/).filter(Boolean).slice(0,2)
                       .map(s => s[0].toUpperCase()).join("");
                   %>
-
-<div class="avatar-circle" title="<%= learner.full_name %>"><%= initials %></div>
+                  <div class="avatar-circle" title="<%= learner.full_name %>"><%= initials %></div>
               </td>
 
               <td><%= learner.full_name %></td>

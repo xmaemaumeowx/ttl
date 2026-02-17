@@ -2,7 +2,7 @@
 <%- include('partials/navbar') %>
 
 <div class="dashboard">
-  <%- include('partials/sidebar', { activePage: 'mentor-report' }) %>
+  <%- include('partials/sidebar', { activePage, user }) %>
 
   <main class="dashboard-main-content">
     <h1 class="page-title">📊 Mentor Report</h1>
@@ -14,7 +14,6 @@
         <p>Once learners start enrolling in your tracks, you will see the summary here.</p>
       </div>
     <% } else { %>
-
       <div style="overflow-x:auto;">
         <table class="projects-table">
           <thead>
@@ -24,20 +23,17 @@
             </tr>
           </thead>
           <tbody>
-            <% mentorReport.forEach(track => { %>
+            <% mentorReport.forEach((row) => { %>
               <tr>
-                <td><%= track.track_name %></td>
+                <td><%= row.track_name %></td>
                 <td>
-                  <span class="badge ttl-badge">
-                    <%= track.enrolled_count %>
-                  </span>
+                  <span class="badge ttl-badge"><%= row.enrolled_count %></span>
                 </td>
               </tr>
             <% }) %>
           </tbody>
         </table>
       </div>
-
     <% } %>
   </main>
 </div>

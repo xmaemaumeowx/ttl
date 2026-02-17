@@ -1,23 +1,26 @@
 <aside class="sidebar">
+  <div class="profile-avatar">
+    <div class="profile-section">
+  <% 
+    const avatarUrl = user && user.avatar 
+      ? user.avatar 
+      : '/images/default-avatar.png'; 
+  %>
 
-  <!-- PROFILE SECTION -->
-  <div class="profile-section">
+  <img 
+    src="<%= avatarUrl %>" 
+    alt="Profile Photo"
+    class="profile-avatar"
+    onerror="this.onerror=null;this.src='/images/default-avatar.png';"
+  >
 
-    <img 
-      src="<%= user && user.avatar ? user.avatar : '/images/default-avatar.png' %>" 
-      alt="Profile Photo"
-      class="profile-avatar"
-      onerror="this.onerror=null;this.src='/images/default-avatar.png';"
-    >
-
-    <h4><%= user?.fullName || 'User' %></h4>
+  <h4><%= user?.fullName || 'User' %></h4>
+</div>
 
   </div>
 
-  <!-- NAVIGATION -->
   <nav>
     <ul>
-
       <li class="<%= activePage === 'dashboard' ? 'active' : '' %>">
         <a href="/dashboard"><i class="fa fa-th-large"></i> Dashboard</a>
       </li>
@@ -47,8 +50,6 @@
       <li class="<%= activePage === 'settings' ? 'active' : '' %>">
         <a href="/settings"><i class="fa fa-cog"></i> Settings</a>
       </li>
-
     </ul>
   </nav>
-
 </aside>
